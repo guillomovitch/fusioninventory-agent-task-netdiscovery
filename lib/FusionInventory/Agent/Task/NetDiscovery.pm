@@ -130,7 +130,7 @@ sub StartThreads {
     });
 
     if ( (!defined($dico)) || !(%$dico)) {
-        $dico = FusionInventory::Agent::Task::NetDiscovery::Dico::loadDico();
+        $dico = FusionInventory::Agent::Task::NetDiscovery::Dico->new();
         $storage->save({
             idx => 999998,
             data => $dico
