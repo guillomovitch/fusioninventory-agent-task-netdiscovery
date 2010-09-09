@@ -2,6 +2,7 @@ package FusionInventory::Agent::Task::NetDiscovery;
 
 use strict;
 use warnings;
+use base 'FusionInventory::Agent::Task';
 
 use threads;
 use threads::shared;
@@ -30,9 +31,7 @@ our $VERSION = '1.2';
 $ENV{XML_SIMPLE_PREFERRED_PARSER} = 'XML::SAX::PurePerl';
 
 sub main {
-    my ( undef ) = @_;
-    my $self = {};
-    bless $self, 'FusionInventory::Agent::Task::NetDiscovery';
+    my ($self) = @_;
 
     my $storage = $self->{storage} = new FusionInventory::Agent::Storage({
             target => {
