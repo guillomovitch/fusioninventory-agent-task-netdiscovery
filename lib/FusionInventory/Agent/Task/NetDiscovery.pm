@@ -18,7 +18,6 @@ use UNIVERSAL::require;
 use XML::Simple;
 
 use FusionInventory::Agent::Transmitter;
-use FusionInventory::Agent::SNMP;
 use FusionInventory::Agent::Storage;
 use FusionInventory::Agent::Task::NetDiscovery::Dico;
 use FusionInventory::Agent::Task::NetDiscovery::Manufacturer::HewlettPackard;
@@ -189,13 +188,12 @@ sub StartThreads {
         );
     }
 
-    my $ModuleNetSNMP = Net::SNMP->require()
+    my $ModuleNetSNMP = FusionInventory::Agent::SNMP->require();
     if (!$ModuleNetSNMP) {
         $self->{logger}->debug(
-            "Can't load Net::SNMP. SNMP detection can't be used!"
+            "Can't load FusionInventory::Agent::SNMP. SNMP detection can't be used!"
         );
     }
-
 
     # Auth SNMP
     my $authlist = $self->AuthParser($self->{NETDISCOVERY});
