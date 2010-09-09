@@ -31,6 +31,17 @@ $ENV{XML_SIMPLE_PREFERRED_PARSER} = 'XML::SAX::PurePerl';
 sub main {
     my ($self) = @_;
 
+    if (!$self->{target}->isa('FusionInventory::Agent::Target::Server')) {
+        $self->{logger}->debug("No server. Exiting...");
+        return;
+    }
+
+    my $options = $self->{prologresp}->getOptionsInfoByName('NETDISCOVERY');
+    if (!$options) {
+        $self->{logger}->debug("No NETDISCOVERY. Exiting...");
+        return;
+    }
+
     my $config = $self->{config};
     my $target = $self->{target};
     my $logger = $self->{logger};
@@ -43,22 +54,11 @@ sub main {
 
     $logger->debug("FusionInventory NetDiscovery module ".$VERSION);
 
-    if (!$self->{target}->isa('FusionInventory::Agent::Target::Server')) {
-        $self->{logger}->debug("No server. Exiting...");
-        return;
-    }
-
     my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
     $hour  = sprintf("%02d", $hour);
     $min  = sprintf("%02d", $min);
     $yday = sprintf("%04d", $yday);
     $self->{PID} = $yday.$hour.$min;
-
-    my $options = $self->{prologresp}->getOptionsInfoByName('NETDISCOVERY');
-    if (!$options) {
-        $logger->debug("No NETDISCOVERY. Exiting...");
-        return;
-    }
 
     my $network = $self->{network} = FusionInventory::Agent::Transmitter->new({
         logger         => $logger,
