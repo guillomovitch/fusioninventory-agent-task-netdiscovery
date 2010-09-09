@@ -21,7 +21,6 @@ use FusionInventory::Agent::Storage;
 use FusionInventory::Agent::Task::NetDiscovery::Dico;
 use FusionInventory::Agent::Task::NetDiscovery::Manufacturer::HewlettPackard;
 use FusionInventory::Agent::XML::Query::SimpleMessage;
-use FusionInventory::Logger;
 
 our $VERSION = '1.2';
 
@@ -30,23 +29,17 @@ $ENV{XML_SIMPLE_PREFERRED_PARSER} = 'XML::SAX::PurePerl';
 sub main {
     my ($self) = @_;
 
-    my $storage = $self->{storage} = FusionInventory::Agent::Storage->new({
+    my $config = $self->{config};
+    my $target = $self->{target};
+    my $logger = $self->{logger};
+
+    $self->{storage} = FusionInventory::Agent::Storage->new({
         target => {
-            vardir => $ARGV[0],
-        }
+                vardir => $ARGV[0],
+            }
     });
 
-    my $data = $storage->restore({ module => "FusionInventory::Agent" });
-    $self->{data} = $data;
-    my $myData = $self->{myData} = $storage->restore();
-
-    my $config = $self->{config} = $data->{config};
-    my $target = $self->{'target'} = $data->{'target'};
-    my $logger = $self->{logger} = FusionInventory::Logger->new({
-        config => $self->{config}
-    });
-    $self->{prologresp} = $data->{prologresp};
-    $self->{logger}->debug("FusionInventory NetDiscovery module ".$VERSION);
+    $logger->debug("FusionInventory NetDiscovery module ".$VERSION);
 
     if ($target->{type} ne 'server') {
         $logger->debug("No server. Exiting...");
