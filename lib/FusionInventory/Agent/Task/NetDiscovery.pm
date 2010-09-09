@@ -54,16 +54,8 @@ sub main {
     $yday = sprintf("%04d", $yday);
     $self->{PID} = $yday.$hour.$min;
 
-    my $continue = 0;
-    foreach my $num (@{$self->{'prologresp'}->{'parsedcontent'}->{OPTION}}) {
-        if (defined($num)) {
-            if ($num->{NAME} eq "NETDISCOVERY") {
-                $continue = 1;
-                $self->{NETDISCOVERY} = $num;
-            }
-        }
-    }
-    if ($continue == 0) {
+    my $options = $self->{prologresp}->getOptionsInfoByName('NETDISCOVERY');
+    if (!$options) {
         $logger->debug("No NETDISCOVERY. Exiting...");
         exit(0);
     }
