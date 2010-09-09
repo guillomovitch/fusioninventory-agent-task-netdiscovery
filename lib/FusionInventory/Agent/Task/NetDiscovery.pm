@@ -14,6 +14,7 @@ use Data::Dumper;
 
 use XML::Simple;
 use Digest::MD5 qw(md5_hex);
+use UNIVERSAL::require;
 
 use FusionInventory::Agent::Transmitter;
 use FusionInventory::Agent::SNMP;
@@ -98,19 +99,18 @@ sub StartThreads {
     my $nb_threads_discovery = $self->{NETDISCOVERY}->{PARAM}->[0]->{THREADS_DISCOVERY};
     my $nb_core_discovery    = $self->{NETDISCOVERY}->{PARAM}->[0]->{CORE_DISCOVERY};
 
-    if ( not eval { require Parallel::ForkManager; 1 } ) {
+    Parallel::ForkManager->require();
+    if ($@) {
         if ($nb_core_discovery > 1) {
-            $self->{logger}->debug("Parallel::ForkManager not installed, so only 1 core will be used...");
+            $self->{logger}->debug(
+                "Parallel::ForkManager unvailable, only 1 core will be used..."
+            );
             $nb_core_discovery = 1;
         }
     }
 
     my $xml_thread = {};
 
-    my $ModuleNmapScanner = 0;
-    my $ModuleNmapParser  = 0;
-    my $ModuleNetNBName   = 0;
-    my $ModuleNetSNMP     = 0;
     my $iplist = {};
     my $iplist2 = &share({});
     my %TuerThread;
@@ -173,26 +173,26 @@ sub StartThreads {
     }
     $self->{logger}->debug("Dico loaded.");
 
-    if ( eval { require Nmap::Parser; 1 } ) {
-        $ModuleNmapParser = 1;
-    } elsif ( eval { require Nmap::Scanner; 1 } ) {
-        if ($@) {
-            $self->{logger}->debug("Can't load Nmap::Parser && map::Scanner. Nmap can't be used!");
-        } else {
-            $ModuleNmapScanner = 1;
-        }
+    my $ModuleNmapParser = Nmap::Parser->require();
+    my $$ModuleNmapScanner = Nmap::Scanner->require()
+    if (!$ModuleNmapParser && !$ModuleNmapScanner) {
+        $self->{logger}->debug(
+            "Can't load Nmap::Parser && map::Scanner. Nmap can't be used!"
+        );
     }
 
-    if ( eval { require Net::NBName; 1 } ) {
-        $ModuleNetNBName = 1;
-    } else {
-        $self->{logger}->debug("Can't load Net::NBName. Netbios detection can't be used!");
+    my $ModuleNetNBName = Net::NBName->require();
+    if (!$ModuleNetNBName) {
+        $self->{logger}->debug(
+            "Can't load Net::NBName. Netbios detection can't be used!"
+        );
     }
 
-    if ( eval { require Net::SNMP; 1 } ) {
-        $ModuleNetSNMP = 1;
-    } else {
-        $self->{logger}->debug("Can't load Net::SNMP. SNMP detection can't be used!");
+    my $ModuleNetSNMP = Net::SNMP->require()
+    if (!$ModuleNetSNMP) {
+        $self->{logger}->debug(
+            "Can't load Net::SNMP. SNMP detection can't be used!"
+        );
     }
 
 
@@ -1086,7 +1086,7 @@ sub initModList {
         }
     }
     if (@dirToScan) {
-        eval {require File::Find};
+        File::Find->require();
         if ($@) {
             $logger->debug("Failed to load File::Find");
         } else {
@@ -1109,7 +1109,7 @@ sub initModList {
         my $t = $file;
         next unless $t =~ s!.*?(FusionInventory/Agent/Task/NetDiscovery/Manufacturer/)(.*?)\.pm$!$1$2!;
         my $m = join ('::', split /\//, $t);
-        eval "use $m;";
+        $m->require();
         if ($@) {
             $logger->debug ("Failed to load $m: $@");
             next;
