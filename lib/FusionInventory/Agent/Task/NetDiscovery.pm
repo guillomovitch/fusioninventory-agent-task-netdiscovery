@@ -15,7 +15,7 @@ use Data::Dumper;
 use XML::Simple;
 use Digest::MD5 qw(md5_hex);
 
-use FusionInventory::Agent::Network;
+use FusionInventory::Agent::Transmitter;
 use FusionInventory::Agent::SNMP;
 use FusionInventory::Agent::Storage;
 use FusionInventory::Agent::Task::NetDiscovery::Dico;
@@ -78,10 +78,15 @@ sub main {
         exit(0);
     }
 
-    my $network = $self->{network} = FusionInventory::Agent::Network->new({
-        logger => $logger,
-        config => $config,
-        target => $target,
+    my $network = $self->{network} = FusionInventory::Agent::Transmitter->new({
+        logger         => $logger,
+        url            => $target->{path},
+        proxy          => $config->{proxy},
+        user           => $config->{user},
+        password       => $config->{password},
+        'no-ssl-check' => $config->{'no-ssl-check'},
+        'ca-cert-file' => $config->{'ca-cert-file'},
+        'ca-cert-dir'  => $config->{'ca-cert-dir'},
     });
 
     $self->{countxml} = 0;
