@@ -12,6 +12,7 @@ if ($threads::VERSION > 1.32){
 
 use Data::Dumper;
 
+use File::Find;
 use XML::Simple;
 use Digest::MD5 qw(md5_hex);
 use UNIVERSAL::require;
@@ -1086,24 +1087,20 @@ sub initModList {
         }
     }
     if (@dirToScan) {
-        File::Find->require();
-        if ($@) {
-            $logger->debug("Failed to load File::Find");
-        } else {
-            # here I need to use $d to avoid a bug with AIX 5.2's perl 5.8.0. It
-            # changes the @INC content if i use $_ directly
-            # thanks to @rgs on irc.perl.org
-            File::Find::find(
-                {
-                    wanted => sub {
-                        push @installed_files, $File::Find::name if $File::Find::name =~
-                        /FusionInventory\/Agent\/Task\/NetDiscovery\/Manufacturer\/.*\.pm$/;
-                    },
-                    follow => 1,
-                    follow_skip => 2
-                }
-                , @dirToScan);
-        }
+        # here I need to use $d to avoid a bug with AIX 5.2's perl 5.8.0. It
+        # changes the @INC content if i use $_ directly
+        # thanks to @rgs on irc.perl.org
+        File::Find::find(
+            {
+                wanted => sub {
+                    push @installed_files, $File::Find::name if $File::Find::name =~
+                    /FusionInventory\/Agent\/Task\/NetDiscovery\/Manufacturer\/.*\.pm$/;
+                },
+                follow => 1,
+                follow_skip => 2
+            }
+            , @dirToScan
+        );
     }
     foreach my $file (@installed_files) {
         my $t = $file;
