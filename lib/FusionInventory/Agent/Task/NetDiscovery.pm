@@ -45,7 +45,7 @@ sub main {
 
     if ($target->{type} ne 'server') {
         $logger->debug("No server. Exiting...");
-        exit(0);
+        return;
     }
 
     my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
@@ -57,12 +57,12 @@ sub main {
     my $options = $self->{prologresp}->getOptionsInfoByName('NETDISCOVERY');
     if (!$options) {
         $logger->debug("No NETDISCOVERY. Exiting...");
-        exit(0);
+        return;
     }
 
     if ($target->{'type'} ne 'server') {
         $logger->debug("No server. Exiting...");
-        exit(0);
+        return;
     }
 
     my $network = $self->{network} = FusionInventory::Agent::Transmitter->new({
@@ -82,7 +82,7 @@ sub main {
 
     $self->StartThreads();
 
-    exit(0);
+    return;
 }
 
 
@@ -161,7 +161,7 @@ sub StartThreads {
             });
             undef($xml_thread);
             $self->{logger}->debug("Dico is old. Exiting...");
-            exit(0);
+            return;
         }
     }
     $self->{logger}->debug("Dico loaded.");
