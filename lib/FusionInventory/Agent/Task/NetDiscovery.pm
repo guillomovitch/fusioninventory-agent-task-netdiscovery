@@ -11,11 +11,11 @@ if ($threads::VERSION > 1.32){
 }
 
 use Data::Dumper;
-
-use File::Find;
-use XML::Simple;
 use Digest::MD5 qw(md5_hex);
+use File::Find;
+use Net::IP;
 use UNIVERSAL::require;
+use XML::Simple;
 
 use FusionInventory::Agent::Transmitter;
 use FusionInventory::Agent::SNMP;
@@ -199,9 +199,6 @@ sub StartThreads {
 
     # Auth SNMP
     my $authlist = $self->AuthParser($self->{NETDISCOVERY});
-
-    ##### Get IP to scan
-    use Net::IP;
 
     # Dispatch IPs to different core
     my $startIP = q{}; # Empty string
