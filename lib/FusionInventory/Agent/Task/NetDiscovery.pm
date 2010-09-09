@@ -60,11 +60,6 @@ sub main {
         return;
     }
 
-    if ($target->{'type'} ne 'server') {
-        $logger->debug("No server. Exiting...");
-        return;
-    }
-
     my $network = $self->{network} = FusionInventory::Agent::Transmitter->new({
         logger         => $logger,
         url            => $target->{path},
