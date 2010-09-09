@@ -46,13 +46,13 @@ sub main {
     my $target = $self->{target};
     my $logger = $self->{logger};
 
+    $logger->debug("FusionInventory NetDiscovery module ".$VERSION);
+
     $self->{storage} = FusionInventory::Agent::Storage->new({
         target => {
                 vardir => $ARGV[0],
             }
     });
-
-    $logger->debug("FusionInventory NetDiscovery module ".$VERSION);
 
     my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
     $hour  = sprintf("%02d", $hour);
@@ -60,7 +60,7 @@ sub main {
     $yday = sprintf("%04d", $yday);
     $self->{PID} = $yday.$hour.$min;
 
-    my $network = $self->{network} = FusionInventory::Agent::Transmitter->new({
+    $self->{network} = FusionInventory::Agent::Transmitter->new({
         logger         => $logger,
         url            => $target->{path},
         proxy          => $config->{proxy},
