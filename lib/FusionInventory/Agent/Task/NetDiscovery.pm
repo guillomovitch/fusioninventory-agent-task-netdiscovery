@@ -31,10 +31,10 @@ sub main {
     my ($self) = @_;
 
     my $storage = $self->{storage} = FusionInventory::Agent::Storage->new({
-            target => {
-                vardir => $ARGV[0],
-            }
-        });
+        target => {
+            vardir => $ARGV[0],
+        }
+    });
 
     my $data = $storage->restore({ module => "FusionInventory::Agent" });
     $self->{data} = $data;
@@ -43,8 +43,8 @@ sub main {
     my $config = $self->{config} = $data->{config};
     my $target = $self->{'target'} = $data->{'target'};
     my $logger = $self->{logger} = FusionInventory::Logger->new({
-            config => $self->{config}
-        });
+        config => $self->{config}
+    });
     $self->{prologresp} = $data->{prologresp};
     $self->{logger}->debug("FusionInventory NetDiscovery module ".$VERSION);
 
@@ -79,12 +79,10 @@ sub main {
     }
 
     my $network = $self->{network} = FusionInventory::Agent::Network->new({
-
-            logger => $logger,
-            config => $config,
-            target => $target,
-
-        });
+        logger => $logger,
+        config => $config,
+        target => $target,
+    });
 
    $self->{countxml} = 0;
 
@@ -546,12 +544,10 @@ sub StartThreads {
          }
 
          my $network = $self->{network} = FusionInventory::Agent::Network->new({
-
-                  logger => $self->{logger},
-                  config => $self->{config},
-                  target => $self->{target},
-
-              });
+              logger => $self->{logger},
+              config => $self->{config},
+              target => $self->{target},
+          });
 
          # Send infos to server :
          if ($sendstart eq "0") {
@@ -644,16 +640,15 @@ sub SendInformations{
 
    my $config = $self->{config};
 
-   my $xmlMsg = FusionInventory::Agent::XML::Query::SimpleMessage->new(
-       {
-           config => $self->{config},
-           logger => $self->{logger},
-           target => $self->{target},
-           msg    => {
-               QUERY => 'NETDISCOVERY',
-               CONTENT   => $message->{data},
-           },
-       });
+   my $xmlMsg = FusionInventory::Agent::XML::Query::SimpleMessage->new({
+       config => $self->{config},
+       logger => $self->{logger},
+       target => $self->{target},
+       msg    => {
+           QUERY => 'NETDISCOVERY',
+           CONTENT   => $message->{data},
+       },
+   });
    $self->{network}->send({message => $xmlMsg});
 }
 
@@ -796,7 +791,6 @@ sub discovery_ip_threaded {
          for my $key ( keys %{$params->{authlist}} ) {
             if ($params->{authlist}->{$key}->{VERSION} eq $snmpv) {
                my $session = FusionInventory::Agent::SNMP->new({
-
                   version      => $params->{authlist}->{$key}->{VERSION},
                   hostname     => $params->{ip},
                   community    => $params->{authlist}->{$key}->{COMMUNITY},
@@ -806,7 +800,6 @@ sub discovery_ip_threaded {
                   privpassword => $params->{authlist}->{$key}->{PRIVPASSWORD},
                   privprotocol => $params->{authlist}->{$key}->{PRIVPROTOCOL},
                   translate    => 1,
-
                });
 
                if (!defined($session->{SNMPSession}->{session})) {
@@ -1054,16 +1047,15 @@ sub writeXML {
 
   # Convert perl data structure into xml strings
 
-   my $xmlMsg = FusionInventory::Agent::XML::Query::SimpleMessage->new(
-        {
-            config => $self->{config},
-            logger => $self->{logger},
-            target => $self->{target},
-            msg    => {
-                QUERY => 'NETDISCOVERY',
-                CONTENT   => $message->{data},
-            },
-        });
+   my $xmlMsg = FusionInventory::Agent::XML::Query::SimpleMessage->new( {
+        config => $self->{config},
+        logger => $self->{logger},
+        target => $self->{target},
+        msg    => {
+            QUERY => 'NETDISCOVERY',
+            CONTENT   => $message->{data},
+        },
+    });
 
   if (open OUT, ">$localfile") {
     print OUT $xmlMsg;
