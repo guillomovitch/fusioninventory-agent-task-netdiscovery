@@ -43,8 +43,8 @@ sub main {
 
     $logger->debug("FusionInventory NetDiscovery module ".$VERSION);
 
-    if ($target->{type} ne 'server') {
-        $logger->debug("No server. Exiting...");
+    if (!$self->{target}->isa('FusionInventory::Agent::Target::Server')) {
+        $self->{logger}->debug("No server. Exiting...");
         return;
     }
 
