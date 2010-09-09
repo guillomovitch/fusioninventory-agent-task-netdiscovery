@@ -30,7 +30,7 @@ $ENV{XML_SIMPLE_PREFERRED_PARSER} = 'XML::SAX::PurePerl';
 sub main {
     my ($self) = @_;
 
-    my $storage = $self->{storage} = new FusionInventory::Agent::Storage({
+    my $storage = $self->{storage} = FusionInventory::Agent::Storage->new({
             target => {
                 vardir => $ARGV[0],
             }
@@ -42,7 +42,7 @@ sub main {
 
     my $config = $self->{config} = $data->{config};
     my $target = $self->{'target'} = $data->{'target'};
-    my $logger = $self->{logger} = new FusionInventory::Logger ({
+    my $logger = $self->{logger} = FusionInventory::Logger->new({
             config => $self->{config}
         });
     $self->{prologresp} = $data->{prologresp};
@@ -78,7 +78,7 @@ sub main {
         exit(0);
     }
 
-    my $network = $self->{network} = new FusionInventory::Agent::Network ({
+    my $network = $self->{network} = FusionInventory::Agent::Network->new({
 
             logger => $logger,
             config => $config,
@@ -224,7 +224,7 @@ sub StartThreads {
    #============================================
    $max_procs = $nb_core_discovery * $nb_threads_discovery;
    if ($nb_core_discovery > 1) {
-      $pm=new Parallel::ForkManager($max_procs);
+      $pm = Parallel::ForkManager->new($max_procs);
    }
 
    my @Thread;
@@ -267,7 +267,7 @@ sub StartThreads {
                $countnb++;
                $nbip++;
             } else {
-               $ip = new Net::IP ($self->{NETDISCOVERY}->{RANGEIP}->{IPSTART}.' - '.$self->{NETDISCOVERY}->{RANGEIP}->{IPEND});
+               $ip = Net::IP->new($self->{NETDISCOVERY}->{RANGEIP}->{IPSTART}.' - '.$self->{NETDISCOVERY}->{RANGEIP}->{IPEND});
                do {
                   if ($threads_run eq "0") {
                      $iplist->{$countnb} = &share({});
@@ -301,7 +301,7 @@ sub StartThreads {
                   $nbip++;
                } else {
                   if ($num->{IPSTART} ne "") {
-                     $ip = new Net::IP ($num->{IPSTART}.' - '.$num->{IPEND});
+                     $ip = Net::IP->new($num->{IPSTART}.' - '.$num->{IPEND});
                      do {
                         if ($threads_run eq "0") {
                            $iplist->{$countnb} = &share({});
@@ -545,7 +545,7 @@ sub StartThreads {
             ### END Threads Creation
          }
 
-         my $network = $self->{network} = new FusionInventory::Agent::Network ({
+         my $network = $self->{network} = FusionInventory::Agent::Network->new({
 
                   logger => $self->{logger},
                   config => $self->{config},
@@ -708,7 +708,7 @@ sub discovery_ip_threaded {
 
    #** Nmap discovery
    if ($params->{ModuleNmapParser} eq "1") {
-      my $scan = new Nmap::Parser;
+      my $scan = Nmap::Parser->new();
       if (eval {$scan->parsescan('nmap','-sP --system-dns --max-retries 1 --max-rtt-timeout 1000 ', $params->{ip})}) {
          if (exists($scan->{HOSTS}->{$params->{ip}}->{addrs}->{mac}->{addr})) {
             $datadevice->{MAC} = special_char($scan->{HOSTS}->{$params->{ip}}->{addrs}->{mac}->{addr});
@@ -722,10 +722,10 @@ sub discovery_ip_threaded {
          }
       }
    } elsif ($params->{ModuleNmapScanner} eq "1") {
-      my $scan = new Nmap::Scanner;
+      my $scan = Nmap::Scanner->new();
       my $results_nmap = $scan->scan('-sP --system-dns --max-retries 1 --max-rtt-timeout 1000 '.$params->{ip});
 
-      my $xml_nmap = new XML::Simple;
+      my $xml_nmap = XML::Simple->new();
       my $macaddress = q{}; # Empty string
       my $hostname = q{}; # Empty string
       my $netportvendor = q{}; # Empty string
@@ -749,7 +749,7 @@ sub discovery_ip_threaded {
 
    #** Netbios discovery
    if ($params->{ModuleNetNBName} eq "1") {
-      my $nb = Net::NBName->new;
+      my $nb = Net::NBName->new();
 
       my $domain = q{}; # Empty string
       my $user = q{}; # Empty string
@@ -795,7 +795,7 @@ sub discovery_ip_threaded {
          }
          for my $key ( keys %{$params->{authlist}} ) {
             if ($params->{authlist}->{$key}->{VERSION} eq $snmpv) {
-               my $session = new FusionInventory::Agent::SNMP ({
+               my $session = FusionInventory::Agent::SNMP->new({
 
                   version      => $params->{authlist}->{$key}->{VERSION},
                   hostname     => $params->{ip},
