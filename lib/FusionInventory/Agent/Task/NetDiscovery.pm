@@ -12,6 +12,7 @@ if ($threads::VERSION > 1.32){
 
 use Data::Dumper;
 use Digest::MD5 qw(md5_hex);
+use English qw(-no_match_vars);
 use File::Find;
 use Net::IP;
 use UNIVERSAL::require;
@@ -100,7 +101,7 @@ sub StartThreads {
     my $nb_core_discovery    = $self->{NETDISCOVERY}->{PARAM}->[0]->{CORE_DISCOVERY};
 
     Parallel::ForkManager->require();
-    if ($@) {
+    if ($EVAL_ERROR) {
         if ($nb_core_discovery > 1) {
             $self->{logger}->debug(
                 "Parallel::ForkManager unvailable, only 1 core will be used..."
@@ -1057,7 +1058,7 @@ sub writeXML {
         close OUT or warn;
         $logger->info("Inventory saved in $localfile");
     } else {
-        warn "Can't open `$localfile': $!"
+        warn "Can't open `$localfile': $ERRNO"
     }
 }
 
@@ -1102,8 +1103,8 @@ sub initModList {
         next unless $t =~ s!.*?(FusionInventory/Agent/Task/NetDiscovery/Manufacturer/)(.*?)\.pm$!$1$2!;
         my $m = join ('::', split /\//, $t);
         $m->require();
-        if ($@) {
-            $logger->debug ("Failed to load $m: $@");
+        if ($EVAL_ERROR) {
+            $logger->debug ("Failed to load $m: $EVAL_ERROR");
             next;
         } else {
             $logger->debug ($m." loaded");
