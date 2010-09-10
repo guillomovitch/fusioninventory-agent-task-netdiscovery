@@ -162,7 +162,7 @@ sub StartThreads {
     $self->{logger}->debug("Dico loaded.");
 
     my $ModuleNmapParser = Nmap::Parser->require();
-    my $$ModuleNmapScanner = Nmap::Scanner->require()
+    my $ModuleNmapScanner = Nmap::Scanner->require();
     if (!$ModuleNmapParser && !$ModuleNmapScanner) {
         $self->{logger}->debug(
             "Can't load Nmap::Parser && map::Scanner. Nmap can't be used!"
