@@ -60,7 +60,7 @@ sub main {
     $yday = sprintf("%04d", $yday);
     $self->{PID} = $yday.$hour.$min;
 
-    $self->{network} = FusionInventory::Agent::Transmitter->new({
+    $self->{transmitter} = FusionInventory::Agent::Transmitter->new({
         logger         => $logger,
         url            => $target->{path},
         proxy          => $config->{proxy},
@@ -631,7 +631,7 @@ sub SendInformations{
             CONTENT   => $message->{data},
         },
     });
-    $self->{network}->send({message => $xmlMsg});
+    $self->{transmitter}->send({message => $xmlMsg});
 }
 
 
