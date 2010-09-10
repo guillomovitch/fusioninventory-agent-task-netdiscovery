@@ -1100,33 +1100,12 @@ __END__
 
 =head1 NAME
 
-FusionInventory::Agent::Task::NetDiscovery - SNMP support for FusionInventory Agent
+FusionInventory::Agent::Task::NetDiscovery - Network discovery task for FusionInventory Agent
 
 =head1 DESCRIPTION
 
-This module scans your networks to get informations from devices with SNMP protocol
-
-=over 4
-
-=item *
-networking devices discovery within an IP range
-
-=item *
-network switche, printer and router analyse
-
-=item *
-relation between computer / printer / switch port
-
-=item *
-identify unknown MAC addresses
-
-=item *
-report printer cartridge and ounter status
-
-=item *
-support management of SNMP versions v1, v2, v3
-
-=back
+This module scans your networks to detect unknown devices with various
+methods (SNMP, NetBios, Netmap).
 
 The plugin depends on FusionInventory for GLPI.
 
@@ -1145,9 +1124,6 @@ FusionInventory.
 FusionInventory website: L<http://www.FusionInventory.org/>
 
 =item *
-LaunchPad project page: L<http://launchpad.net/fusioninventory-agent-task-netdiscovery>
-
-=item *
 the Mailing lists and IRC
 
 =back
@@ -1155,8 +1131,7 @@ the Mailing lists and IRC
 =head1 BUGS
 
 Please, use the mailing lists as much as possible. You can open your own bug
-tickets. Patches are welcome. You can also use LaunchPad bugtracker or
-push your Bazaar branch on LaunchPad and do a merge request.
+tickets. Patches are welcome.
 
 =head1 COPYRIGHT
 
