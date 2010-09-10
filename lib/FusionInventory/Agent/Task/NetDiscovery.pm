@@ -525,12 +525,6 @@ sub StartThreads {
                 ### END Threads Creation
             }
 
-            my $network = $self->{network} = FusionInventory::Agent::Network->new({
-                logger => $self->{logger},
-                config => $self->{config},
-                target => $self->{target},
-            });
-
             # Send infos to server :
             if ($sendstart == 0) {
                 my $xml_thread = {};
