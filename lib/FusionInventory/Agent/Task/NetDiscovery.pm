@@ -28,7 +28,7 @@ our $VERSION = '1.2';
 
 $ENV{XML_SIMPLE_PREFERRED_PARSER} = 'XML::SAX::PurePerl';
 
-sub main {
+sub run {
     my ($self) = @_;
 
     if (!$self->{target}->isa('FusionInventory::Agent::Target::Server')) {
