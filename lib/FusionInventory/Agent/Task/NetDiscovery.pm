@@ -179,7 +179,7 @@ sub startThreads {
     }
 
     my @Thread;
-    for(my $p = 0; $p < $params->{CORE_DISCOVERY}; $p++) {
+    for (my $p = 0; $p < $params->{CORE_DISCOVERY}; $p++) {
         if ($params->{CORE_DISCOVERY} > 1) {
             my $pid = $pm->start and next;
         }
@@ -557,14 +557,17 @@ sub startThreads {
             }
             $storage->removeSubDumps();
 
-        } 
+        }
+
         if ($params->{CORE_DISCOVERY} > 1) {
             $pm->finish;
         }
     }
+
     if ($params->{CORE_DISCOVERY} > 1) {
         $pm->wait_all_children;
     }
+
     # Send infos to server :
     my $xml_thread = {
         AGENT => { END => 1 },
