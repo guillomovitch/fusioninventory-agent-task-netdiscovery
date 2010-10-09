@@ -124,15 +124,15 @@ sub startThreads {
             $self->{logger}->debug("Dico is up to date.");
         } else {
             # Send Dico request to plugin for next time :
-            undef($xml_thread);
-            $xml_thread->{AGENT}->{END} = '1';
-            $xml_thread->{MODULEVERSION} = $VERSION;
-            $xml_thread->{PROCESSNUMBER} = $params->{PID};
-            $xml_thread->{DICO}          = "REQUEST";
+            my $xml_thread = {
+                AGENT         => { END => 1 },
+                MODULEVERSION => $VERSION,
+                PROCESSNUMBER => $params->{PID},
+                DICO          => 'REQUEST'
+            };
             $self->sendInformations({
                 data => $xml_thread
             });
-            undef($xml_thread);
             $self->{logger}->debug("Dico is old. Exiting...");
             return;
         }
