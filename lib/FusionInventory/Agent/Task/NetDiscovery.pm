@@ -62,16 +62,16 @@ sub run {
 sub startThreads {
     my ($self) = @_;
 
-    my $nb_threads_discovery = $self->{NETDISCOVERY}->{PARAM}->[0]->{THREADS_DISCOVERY};
-    my $nb_core_discovery    = $self->{NETDISCOVERY}->{PARAM}->[0]->{CORE_DISCOVERY};
+    my $options = $self->{prologresp}->getOptionsInfoByName('NETDISCOVERY');
+    my $params  = $options->{PARAM}->[0];
 
     Parallel::ForkManager->require();
     if ($EVAL_ERROR) {
-        if ($nb_core_discovery > 1) {
+        if ($params->{CORE_DISCOVERY} > 1) {
             $self->{logger}->debug(
                 "Parallel::ForkManager unvailable, only 1 core will be used..."
             );
-            $nb_core_discovery = 1;
+            $params->{CORE_DISCOVERY} = 1;
         }
     }
 
@@ -88,12 +88,12 @@ sub startThreads {
     my $dicohash;
 
     # Load storage with XML dico
-    if (defined($self->{NETDISCOVERY}->{DICO})) {
+    if (defined($options->{DICO})) {
         $storage->save({
             idx => 999998,
-            data => $self->{NETDISCOVERY}->{DICO}
+            data => $options->{DICO}
         });
-        $dicohash->{HASH} = md5_hex($self->{NETDISCOVERY}->{DICO});
+        $dicohash->{HASH} = md5_hex($options->{DICO});
         $storage->save({
             idx => 999999,
             data => $dicohash
@@ -119,15 +119,15 @@ sub startThreads {
             data => $dicohash
         });
     }
-    if (defined($self->{NETDISCOVERY}->{DICOHASH})) {
-        if ($dicohash->{HASH} eq $self->{NETDISCOVERY}->{DICOHASH}) {
+    if (defined($options->{DICOHASH})) {
+        if ($dicohash->{HASH} eq $options->{DICOHASH}) {
             $self->{logger}->debug("Dico is up to date.");
         } else {
             # Send Dico request to plugin for next time :
             undef($xml_thread);
             $xml_thread->{AGENT}->{END} = '1';
             $xml_thread->{MODULEVERSION} = $VERSION;
-            $xml_thread->{PROCESSNUMBER} = $self->{NETDISCOVERY}->{PARAM}->[0]->{PID};
+            $xml_thread->{PROCESSNUMBER} = $params->{PID};
             $xml_thread->{DICO}          = "REQUEST";
             $self->sendInformations({
                 data => $xml_thread
@@ -162,7 +162,7 @@ sub startThreads {
     }
 
     # Auth SNMP
-    my $authlist = FusionInventory::Agent::SNMP->getAuthList($self->{NETDISCOVERY});
+    my $authlist = FusionInventory::Agent::SNMP->getAuthList($options);
 
     # Dispatch IPs to different core
     my $startIP = q{}; # Empty string
@@ -171,7 +171,7 @@ sub startThreads {
     my $countnb;
     my $core_counter = 0;
     my $nb_ip_per_thread = 25;
-    my $limitip = $nb_threads_discovery * $nb_ip_per_thread;
+    my $limitip = $params->{THREADS_DISCOVERY} * $nb_ip_per_thread;
     my $ip;
     my $max_procs;
     my $pm;
@@ -180,15 +180,15 @@ sub startThreads {
     #============================================
     # Begin ForkManager (multiple core / process)
     #============================================
-    $max_procs = $nb_core_discovery * $nb_threads_discovery;
-    if ($nb_core_discovery > 1) {
+    $max_procs = $params->{CORE_DISCOVERY} * $params->{THREADS_DISCOVERY};
+    if ($params->{CORE_DISCOVERY} > 1) {
         $pm = Parallel::ForkManager->new($max_procs);
     }
 
     my @Thread;
     my $xml_Thread : shared = q{}; # Empty string
-    for(my $p = 0; $p < $nb_core_discovery; $p++) {
-        if ($nb_core_discovery > 1) {
+    for(my $p = 0; $p < $params->{CORE_DISCOVERY}; $p++) {
+        if ($params->{CORE_DISCOVERY} > 1) {
             my $pid = $pm->start and next;
         }
 
@@ -214,40 +214,40 @@ sub startThreads {
             }
 
 
-            if (ref($self->{NETDISCOVERY}->{RANGEIP}) eq "HASH"){
-                if ($self->{NETDISCOVERY}->{RANGEIP}->{IPSTART} eq $self->{NETDISCOVERY}->{RANGEIP}->{IPEND}) {
+            if (ref($options->{RANGEIP}) eq "HASH"){
+                if ($options->{RANGEIP}->{IPSTART} eq $options->{RANGEIP}->{IPEND}) {
                     if ($threads_run == 0) {
                         $iplist->{$countnb} = &share({});
                     }
-                    $iplist->{$countnb}->{IP} = $self->{NETDISCOVERY}->{RANGEIP}->{IPSTART};
-                    $iplist->{$countnb}->{ENTITY} = $self->{NETDISCOVERY}->{RANGEIP}->{ENTITY};
+                    $iplist->{$countnb}->{IP} = $options->{RANGEIP}->{IPSTART};
+                    $iplist->{$countnb}->{ENTITY} = $options->{RANGEIP}->{ENTITY};
                     $iplist2->{$countnb} = $countnb;
                     $countnb++;
                     $nbip++;
                 } else {
-                    $ip = Net::IP->new($self->{NETDISCOVERY}->{RANGEIP}->{IPSTART}.' - '.$self->{NETDISCOVERY}->{RANGEIP}->{IPEND});
+                    $ip = Net::IP->new($options->{RANGEIP}->{IPSTART}.' - '.$options->{RANGEIP}->{IPEND});
                     do {
                         if ($threads_run == 0) {
                             $iplist->{$countnb} = &share({});
                         }
                         $iplist->{$countnb}->{IP} = $ip->ip();
-                        $iplist->{$countnb}->{ENTITY} = $self->{NETDISCOVERY}->{RANGEIP}->{ENTITY};
+                        $iplist->{$countnb}->{ENTITY} = $options->{RANGEIP}->{ENTITY};
                         $iplist2->{$countnb} = $countnb;
                         $countnb++;
                         $nbip++;
                         if ($nbip eq $limitip) {
-                            if ($ip->ip() ne $self->{NETDISCOVERY}->{RANGEIP}->{IPEND}) {
+                            if ($ip->ip() ne $options->{RANGEIP}->{IPEND}) {
                                 ++$ip;
-                                $self->{NETDISCOVERY}->{RANGEIP}->{IPSTART} = $ip->ip();
+                                $options->{RANGEIP}->{IPSTART} = $ip->ip();
                                 $loop_action = 1;
                                 goto CONTINUE;
                             }
                         }
                     } while (++$ip);
-                    undef $self->{NETDISCOVERY}->{RANGEIP};
+                    undef $options->{RANGEIP};
                 }
             } else {
-                foreach my $num (@{$self->{NETDISCOVERY}->{RANGEIP}}) {
+                foreach my $num (@{$options->{RANGEIP}}) {
                     if ($num->{IPSTART} eq $num->{IPEND}) {
                         if ($threads_run == 0) {
                             $iplist->{$countnb} = &share({});
@@ -289,17 +289,17 @@ sub startThreads {
 #         if ($nbip > ($nb_ip_per_thread * 4)) {
 #            
 #         } elsif ($nbip > $nb_ip_per_thread) {
-#            $nb_threads_discovery = int($nbip / $nb_ip_per_thread) + 4;
+#            $params->{THREADS_DISCOVERY} = int($nbip / $nb_ip_per_thread) + 4;
 #         } else {
-#            $nb_threads_discovery = $nbip;
+#            $params->{THREADS_DISCOVERY} = $nbip;
 #         }
 
             CONTINUE:
 #$self->{logger}->debug("LOOP : ".$loop_action);
-            $loop_nbthreads = $nb_threads_discovery;
+            $loop_nbthreads = $params->{THREADS_DISCOVERY};
 
 
-            for(my $j = 0 ; $j < $nb_threads_discovery ; $j++) {
+            for(my $j = 0 ; $j < $params->{THREADS_DISCOVERY} ; $j++) {
                 $ThreadState{$j} = "0";
                 $ThreadAction{$j} = "0";
             }
@@ -310,7 +310,7 @@ sub startThreads {
 
             my $i = 0;
 
-            while ($i < $nb_threads_discovery) {
+            while ($i < $params->{THREADS_DISCOVERY}) {
                 $i++;
             }
             #===================================
@@ -323,7 +323,7 @@ sub startThreads {
                 # Create all Threads
                 #===================================
                 my $k = 0;
-                for(my $j = 0; $j < $nb_threads_discovery; $j++) {
+                for(my $j = 0; $j < $params->{THREADS_DISCOVERY}; $j++) {
                     $threads_run = 1;
                     $k++;
                     $Thread[$p][$j] = threads->create(
@@ -386,7 +386,7 @@ sub startThreads {
                                         if (keys %{$datadevice}) {
                                             $xml_threadt->{DEVICE}->[$count] = $datadevice;
                                             $xml_threadt->{MODULEVERSION} = $VERSION;
-                                            $xml_threadt->{PROCESSNUMBER} = $self->{NETDISCOVERY}->{PARAM}->[0]->{PID};
+                                            $xml_threadt->{PROCESSNUMBER} = $params->{PID};
                                             $count++;
                                         }
                                     }
@@ -433,7 +433,7 @@ sub startThreads {
                         while (1) {
                             if (($loop_action == 0) && ($exit eq "2")) {
                                 ## Kill threads who do nothing partiel ##
-#                              for($i = ($loop_nbthreads - 1) ; $i < $self->{NETDISCOVERY}->{PARAM}->[0]->{THREADS_DISCOVERY} ; $i++) {
+#                              for($i = ($loop_nbthreads - 1) ; $i < $params->{THREADS_DISCOVERY} ; $i++) {
 #                                 $ThreadAction{$i} = "3";
 #                              }
 
@@ -508,7 +508,7 @@ sub startThreads {
                 $xml_thread->{AGENT}->{START} = '1';
                 $xml_thread->{AGENT}->{AGENTVERSION} = $self->{config}->{VERSION};
                 $xml_thread->{MODULEVERSION} = $VERSION;
-                $xml_thread->{PROCESSNUMBER} = $self->{NETDISCOVERY}->{PARAM}->[0]->{PID};
+                $xml_thread->{PROCESSNUMBER} = $params->{PID};
                 $self->sendInformations({
                     data => $xml_thread
                 });
@@ -519,7 +519,7 @@ sub startThreads {
             # Send NB ips to server :
             $xml_thread = {};
             $xml_thread->{AGENT}->{NBIP} = $nbip;
-            $xml_thread->{PROCESSNUMBER} = $self->{NETDISCOVERY}->{PARAM}->[0]->{PID};
+            $xml_thread->{PROCESSNUMBER} = $params->{PID};
             {
                 lock $sendbylwp;
                 $self->sendInformations({
@@ -566,18 +566,18 @@ sub startThreads {
             $storage->removeSubDumps();
 
         } 
-        if ($nb_core_discovery > 1) {
+        if ($params->{CORE_DISCOVERY} > 1) {
             $pm->finish;
         }
     }
-    if ($nb_core_discovery > 1) {
+    if ($params->{CORE_DISCOVERY} > 1) {
         $pm->wait_all_children;
     }
     # Send infos to server :
     undef($xml_thread);
     $xml_thread->{AGENT}->{END} = '1';
     $xml_thread->{MODULEVERSION} = $VERSION;
-    $xml_thread->{PROCESSNUMBER} = $self->{NETDISCOVERY}->{PARAM}->[0]->{PID};
+    $xml_thread->{PROCESSNUMBER} = $params->{PID};
     sleep 1; # Wait for threads be terminated
     $self->sendInformations({
         data => $xml_thread
@@ -955,7 +955,10 @@ sub writeXML {
         $logger->fault ('local path unititalised!');
     }
 
-    my $dir = $self->{NETDISCOVERY}->{PARAM}->[0]->{PID};
+    my $options = $self->{prologresp}->getOptionsInfoByName('SNMPQUERY');
+    my $params  = $options->{PARAM}->[0];
+
+    my $dir = $params->{PID};
     $dir =~ s/\//-/;
 
     my $localfile = $config->{local}."/".$target->{deviceid}.'.'.$dir.'-'.$self->{countxml}.'.xml';
