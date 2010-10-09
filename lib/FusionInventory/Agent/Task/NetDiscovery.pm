@@ -18,7 +18,6 @@ use Net::IP;
 use UNIVERSAL::require;
 use XML::Simple;
 
-use FusionInventory::Agent::Transmitter;
 use FusionInventory::Agent::Storage;
 use FusionInventory::Agent::Task::NetDiscovery::Dico;
 use FusionInventory::Agent::Task::NetDiscovery::Manufacturer::HewlettPackard;
@@ -54,17 +53,6 @@ sub run {
     $min  = sprintf("%02d", $min);
     $yday = sprintf("%04d", $yday);
     $self->{PID} = $yday.$hour.$min;
-
-    $self->{transmitter} = FusionInventory::Agent::Transmitter->new({
-        logger         => $logger,
-        url            => $target->{path},
-        proxy          => $config->{proxy},
-        user           => $config->{user},
-        password       => $config->{password},
-        'no-ssl-check' => $config->{'no-ssl-check'},
-        'ca-cert-file' => $config->{'ca-cert-file'},
-        'ca-cert-dir'  => $config->{'ca-cert-dir'},
-    });
 
     $self->{countxml} = 0;
 
