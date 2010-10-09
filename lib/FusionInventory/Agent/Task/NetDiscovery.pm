@@ -58,13 +58,13 @@ sub run {
 
     $self->initModList();
 
-    $self->StartThreads();
+    $self->startThreads();
 
     return;
 }
 
 
-sub StartThreads {
+sub startThreads {
     my ($self, $params) = @_;
 
     my $nb_threads_discovery = $self->{NETDISCOVERY}->{PARAM}->[0]->{THREADS_DISCOVERY};
@@ -134,7 +134,7 @@ sub StartThreads {
             $xml_thread->{MODULEVERSION} = $VERSION;
             $xml_thread->{PROCESSNUMBER} = $self->{NETDISCOVERY}->{PARAM}->[0]->{PID};
             $xml_thread->{DICO}          = "REQUEST";
-            $self->SendInformations({
+            $self->sendInformations({
                 data => $xml_thread
             });
             undef($xml_thread);
@@ -167,7 +167,7 @@ sub StartThreads {
     }
 
     # Auth SNMP
-    my $authlist = $self->AuthParser($self->{NETDISCOVERY});
+    my $authlist = $self->authParser($self->{NETDISCOVERY});
 
     # Dispatch IPs to different core
     my $startIP = q{}; # Empty string
@@ -375,7 +375,7 @@ sub StartThreads {
                                         }
                                     }
                                     if ($loopthread != 1) {
-                                        my $datadevice = $self->discovery_ip_threaded({
+                                        my $datadevice = $self->discoveryIpThreaded({
                                                 ip                  => $iplist->{$device_id}->{IP},
                                                 entity              => $iplist->{$device_id}->{ENTITY},
                                                 authlist            => $authlistt,
@@ -514,7 +514,7 @@ sub StartThreads {
                 $xml_thread->{AGENT}->{AGENTVERSION} = $self->{config}->{VERSION};
                 $xml_thread->{MODULEVERSION} = $VERSION;
                 $xml_thread->{PROCESSNUMBER} = $self->{NETDISCOVERY}->{PARAM}->[0]->{PID};
-                $self->SendInformations({
+                $self->sendInformations({
                     data => $xml_thread
                 });
                 undef($xml_thread);
@@ -527,7 +527,7 @@ sub StartThreads {
             $xml_thread->{PROCESSNUMBER} = $self->{NETDISCOVERY}->{PARAM}->[0]->{PID};
             {
                 lock $sendbylwp;
-                $self->SendInformations({
+                $self->sendInformations({
                     data => $xml_thread
                 });
             }
@@ -542,7 +542,7 @@ sub StartThreads {
                             idx => $idx
                         });
 
-                        $self->SendInformations({
+                        $self->sendInformations({
                             data => $data
                         });
                         $sentxml->{$idx} = 1;
@@ -560,7 +560,7 @@ sub StartThreads {
                         idx => $idx
                     });
 
-                    $self->SendInformations({
+                    $self->sendInformations({
                         data => $data
                     });
                     $sentxml->{$idx} = 1;
@@ -584,7 +584,7 @@ sub StartThreads {
     $xml_thread->{MODULEVERSION} = $VERSION;
     $xml_thread->{PROCESSNUMBER} = $self->{NETDISCOVERY}->{PARAM}->[0]->{PID};
     sleep 1; # Wait for threads be terminated
-    $self->SendInformations({
+    $self->sendInformations({
         data => $xml_thread
     });
     undef($xml_thread);
@@ -593,7 +593,7 @@ sub StartThreads {
 }
 
 
-sub SendInformations{
+sub sendInformations{
     my ($self, $message) = @_;
 
     my $xmlMsg = FusionInventory::Agent::XML::Query::SimpleMessage->new({
@@ -610,7 +610,7 @@ sub SendInformations{
     });
 }
 
-sub AuthParser {
+sub authParser {
     my ($self, $dataAuth) = @_;
 
     my $authlist = {};
@@ -643,7 +643,7 @@ sub AuthParser {
 
 
 
-sub discovery_ip_threaded {
+sub discoveryIpThreaded {
     my ($self, $params) = @_;
 
     my $datadevice = {};
@@ -662,14 +662,14 @@ sub discovery_ip_threaded {
         my $scan = Nmap::Parser->new();
         if (eval {$scan->parsescan('nmap','-sP --system-dns --max-retries 1 --max-rtt-timeout 1000 ', $params->{ip})}) {
             if (exists($scan->{HOSTS}->{$params->{ip}}->{addrs}->{mac}->{addr})) {
-                $datadevice->{MAC} = special_char($scan->{HOSTS}->{$params->{ip}}->{addrs}->{mac}->{addr});
+                $datadevice->{MAC} = specialChar($scan->{HOSTS}->{$params->{ip}}->{addrs}->{mac}->{addr});
             }
             if (exists($scan->{HOSTS}->{$params->{ip}}->{addrs}->{mac}->{vendor})) {
-                $datadevice->{NETPORTVENDOR} = special_char($scan->{HOSTS}->{$params->{ip}}->{addrs}->{mac}->{vendor});
+                $datadevice->{NETPORTVENDOR} = specialChar($scan->{HOSTS}->{$params->{ip}}->{addrs}->{mac}->{vendor});
             }
 
             if (exists($scan->{HOSTS}->{$params->{ip}}->{hostnames}->[0])) {
-                $datadevice->{DNSHOSTNAME} = special_char($scan->{HOSTS}->{$params->{ip}}->{hostnames}->[0]);
+                $datadevice->{DNSHOSTNAME} = specialChar($scan->{HOSTS}->{$params->{ip}}->{hostnames}->[0]);
             }
         }
     } elsif ($params->{ModuleNmapScanner} == 1) {
@@ -684,15 +684,15 @@ sub discovery_ip_threaded {
         foreach my $key (keys (%{$$results_nmap{'ALLHOSTS'}})) {
             for (my $n=0; $n<@{$$results_nmap{'ALLHOSTS'}{$key}{'addresses'}}; $n++) {
                 if ($$results_nmap{'ALLHOSTS'}{$key}{'addresses'}[$n]{'addrtype'} eq "mac") {
-                    $datadevice->{MAC} = special_char($$results_nmap{'ALLHOSTS'}{$key}{'addresses'}[$n]{'addr'});
+                    $datadevice->{MAC} = specialChar($$results_nmap{'ALLHOSTS'}{$key}{'addresses'}[$n]{'addr'});
                     if (defined($$results_nmap{'ALLHOSTS'}{$key}{'addresses'}[$n]{'vendor'})) {
-                        $datadevice->{NETPORTVENDOR} = special_char($$results_nmap{'ALLHOSTS'}{$key}{'addresses'}[$n]{'vendor'});
+                        $datadevice->{NETPORTVENDOR} = specialChar($$results_nmap{'ALLHOSTS'}{$key}{'addresses'}[$n]{'vendor'});
                     }
                 }
             }
             if (exists($$results_nmap{'ALLHOSTS'}{$key}{'hostnames'}[0])) {
                 for (my $n=0; $n<@{$$results_nmap{'ALLHOSTS'}{$key}{'hostnames'}}; $n++) {
-                    $datadevice->{DNSHOSTNAME} = special_char($$results_nmap{'ALLHOSTS'}{$key}{'hostnames'}[$n]{'name'});
+                    $datadevice->{DNSHOSTNAME} = specialChar($$results_nmap{'ALLHOSTS'}{$key}{'hostnames'}[$n]{'name'});
                 }
             }
         }
@@ -711,14 +711,14 @@ sub discovery_ip_threaded {
         if ($ns) {
             for my $rr ($ns->names) {
                 if ($rr->suffix == 0 && $rr->G eq "GROUP") {
-                    $datadevice->{WORKGROUP} = special_char($rr->name);
+                    $datadevice->{WORKGROUP} = specialChar($rr->name);
                 }
                 if ($rr->suffix == 3 && $rr->G eq "UNIQUE") {
-                    $datadevice->{USERSESSION} = special_char($rr->name);
+                    $datadevice->{USERSESSION} = specialChar($rr->name);
                 }
                 if ($rr->suffix == 0 && $rr->G eq "UNIQUE") {
                     $machine = $rr->name unless $rr->name =~ /^IS~/;
-                    $datadevice->{NETBIOSNAME} = special_char($machine);
+                    $datadevice->{NETBIOSNAME} = specialChar($machine);
                     $type = 1;
                 }
             }
@@ -850,7 +850,7 @@ sub discovery_ip_threaded {
 
 
 
-sub special_char {
+sub specialChar {
     my $variable = shift;
     if (defined($variable)) {
         if ($variable =~ /0x$/) {
