@@ -167,7 +167,7 @@ sub startThreads {
     }
 
     # Auth SNMP
-    my $authlist = $self->authParser($self->{NETDISCOVERY});
+    my $authlist = $self->getAuthList($self->{NETDISCOVERY});
 
     # Dispatch IPs to different core
     my $startIP = q{}; # Empty string
@@ -610,7 +610,7 @@ sub sendInformations{
     });
 }
 
-sub authParser {
+sub getAuthList {
     my ($self, $dataAuth) = @_;
 
     my $authlist = {};
