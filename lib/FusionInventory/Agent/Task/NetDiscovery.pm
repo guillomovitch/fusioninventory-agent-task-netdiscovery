@@ -596,21 +596,19 @@ sub StartThreads {
 sub SendInformations{
     my ($self, $message) = @_;
 
-    my $config = $self->{config};
-
     my $xmlMsg = FusionInventory::Agent::XML::Query::SimpleMessage->new({
-        config => $self->{config},
         logger => $self->{logger},
-        target => $self->{target},
+        deviceid => $self->{deviceid},
         msg    => {
-            QUERY => 'NETDISCOVERY',
-            CONTENT   => $message->{data},
+            QUERY   => 'NETDISCOVERY',
+            CONTENT => $message->{data},
         },
     });
-    $self->{transmitter}->send({message => $xmlMsg});
+    $self->{transmitter}->send({
+        message => $xmlMsg,
+        url     => $self->{target}->getUrl()
+    });
 }
-
-
 
 sub AuthParser {
     my ($self, $dataAuth) = @_;
