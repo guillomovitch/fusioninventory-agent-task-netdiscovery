@@ -167,7 +167,7 @@ sub startThreads {
     }
 
     # Auth SNMP
-    my $authlist = $self->getAuthList($self->{NETDISCOVERY});
+    my $authlist = FusionInventory::Agent::SNMP->getAuthList($self->{NETDISCOVERY});
 
     # Dispatch IPs to different core
     my $startIP = q{}; # Empty string
@@ -610,39 +610,6 @@ sub sendInformations{
     });
 }
 
-sub getAuthList {
-    my ($self, $dataAuth) = @_;
-
-    my $authlist = {};
-
-    if (ref($dataAuth->{AUTHENTICATION}) eq "HASH"){
-        $authlist->{$dataAuth->{AUTHENTICATION}->{ID}} = {
-            COMMUNITY      => $dataAuth->{AUTHENTICATION}->{COMMUNITY},
-            VERSION        => $dataAuth->{AUTHENTICATION}->{VERSION},
-            USERNAME       => $dataAuth->{AUTHENTICATION}->{USERNAME},
-            AUTHPASSWORD   => $dataAuth->{AUTHENTICATION}->{AUTHPASSPHRASE},
-            AUTHPROTOCOL   => $dataAuth->{AUTHENTICATION}->{AUTHPROTOCOL},
-            PRIVPASSWORD   => $dataAuth->{AUTHENTICATION}->{PRIVPASSPHRASE},
-            PRIVPROTOCOL   => $dataAuth->{AUTHENTICATION}->{PRIVPROTOCOL}
-        };
-    } else {
-        foreach my $num (@{$dataAuth->{AUTHENTICATION}}) {
-            $authlist->{ $num->{ID} } = {
-                COMMUNITY      => $num->{COMMUNITY},
-                VERSION        => $num->{VERSION},
-                USERNAME       => $num->{USERNAME},
-                AUTHPASSWORD   => $num->{AUTHPASSPHRASE},
-                AUTHPROTOCOL   => $num->{AUTHPROTOCOL},
-                PRIVPASSWORD   => $num->{PRIVPASSPHRASE},
-                PRIVPROTOCOL   => $num->{PRIVPROTOCOL}
-            };
-        }
-    }
-    return $authlist;
-}
-
-
-
 sub discoveryIpThreaded {
     my ($self, $params) = @_;
 
@@ -751,9 +718,9 @@ sub discoveryIpThreaded {
                         hostname     => $params->{ip},
                         community    => $params->{authlist}->{$key}->{COMMUNITY},
                         username     => $params->{authlist}->{$key}->{USERNAME},
-                        authpassword => $params->{authlist}->{$key}->{AUTHPASSWORD},
+                        authpassword => $params->{authlist}->{$key}->{AUTHPASSPHRASE},
                         authprotocol => $params->{authlist}->{$key}->{AUTHPROTOCOL},
-                        privpassword => $params->{authlist}->{$key}->{PRIVPASSWORD},
+                        privpassword => $params->{authlist}->{$key}->{PRIVPASSPHRASE},
                         privprotocol => $params->{authlist}->{$key}->{PRIVPROTOCOL},
                         translate    => 1,
                     });
