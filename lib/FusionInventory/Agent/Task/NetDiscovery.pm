@@ -936,58 +936,6 @@ sub verifySerial {
     return ("", 0, "", "");
 }
 
-
-sub printXML {
-    my ($self, $args) = @_;
-
-    print $self->getContent();
-}
-
-
-sub writeXML {
-    my ($self, $message) = @_;
-
-    my $logger = $self->{logger};
-    my $config = $self->{config};
-    my $target = $self->{target};
-
-    if ($target->{path} =~ /^$/) {
-        $logger->fault ('local path unititalised!');
-    }
-
-    my $options = $self->{prologresp}->getOptionsInfoByName('SNMPQUERY');
-    my $params  = $options->{PARAM}->[0];
-
-    my $dir = $params->{PID};
-    $dir =~ s/\//-/;
-
-    my $localfile = $config->{local}."/".$target->{deviceid}.'.'.$dir.'-'.$self->{countxml}.'.xml';
-    $localfile =~ s!(//){1,}!/!;
-
-    $self->{countxml} = $self->{countxml} + 1;
-
-    # Convert perl data structure into xml strings
-
-    my $xmlMsg = FusionInventory::Agent::XML::Query::SimpleMessage->new( {
-            config => $self->{config},
-            logger => $self->{logger},
-            target => $self->{target},
-            msg    => {
-                QUERY => 'NETDISCOVERY',
-                CONTENT   => $message->{data},
-            },
-        });
-
-    if (open OUT, ">$localfile") {
-        print OUT $xmlMsg;
-
-        close OUT or warn;
-        $logger->info("Inventory saved in $localfile");
-    } else {
-        warn "Can't open `$localfile': $ERRNO"
-    }
-}
-
 sub initModList {
     my $self = shift;
 
