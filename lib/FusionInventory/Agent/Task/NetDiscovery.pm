@@ -48,11 +48,6 @@ sub run {
 
     $logger->debug("FusionInventory NetDiscovery module ".$VERSION);
 
-    $self->{storage} = FusionInventory::Agent::Storage->new({
-        target => {
-                vardir => $ARGV[0],
-            }
-    });
 
     my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
     $hour  = sprintf("%02d", $hour);
@@ -104,7 +99,7 @@ sub StartThreads {
     my %TuerThread;
     my %ArgumentsThread;
     my $maxIdx : shared = 0;
-    my $storage = $self->{storage};
+    my $storage = $self->{target}->getStorage();
     my $sendstart = 0;
     my $dico;
     my $dicohash;
@@ -415,8 +410,7 @@ sub StartThreads {
                                     if (($count == 4) || (($loopthread eq "1") && ($count > 0))) {
                                         $maxIdx++;
                                         $storage->save({
-                                            idx =>
-                                            $maxIdx,
+                                            idx => $maxIdx,
                                             data => $xml_threadt
                                         });
 
