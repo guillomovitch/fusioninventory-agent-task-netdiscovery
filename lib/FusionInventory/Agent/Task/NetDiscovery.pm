@@ -165,7 +165,6 @@ sub startThreads {
 
     my $nbip = 0;
     my $countnb;
-    my $core_counter = 0;
     my $nb_ip_per_thread = 25;
     my $limitip = $params->{THREADS_DISCOVERY} * $nb_ip_per_thread;
     my $ip;
@@ -199,7 +198,6 @@ sub startThreads {
         while ($loop_action > 0) {
             $countnb = 0;
             $nbip = 0;
-            $core_counter = 0;
 
             if ($threads_run == 0) {
                 $iplist2 = &share({});
