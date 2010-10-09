@@ -75,15 +75,7 @@ sub startThreads {
         }
     }
 
-    my $xml_thread = {};
-
-    my $iplist = {};
-    my $iplist2 = &share({});
-    my %TuerThread;
-    my %ArgumentsThread;
-    my $maxIdx : shared = 0;
     my $storage = $self->{target}->getStorage();
-    my $sendstart = 0;
     my $dico;
     my $dicohash;
 
@@ -165,7 +157,11 @@ sub startThreads {
     my $authlist = FusionInventory::Agent::SNMP->getAuthList($options);
 
     # Dispatch IPs to different core
-    my $startIP = q{}; # Empty string
+    my $iplist = {};
+    my $iplist2 = &share({});
+    my %ArgumentsThread;
+    my $maxIdx : shared = 0;
+    my $sendstart = 0;
 
     my $nbip = 0;
     my $countnb;
@@ -173,14 +169,12 @@ sub startThreads {
     my $nb_ip_per_thread = 25;
     my $limitip = $params->{THREADS_DISCOVERY} * $nb_ip_per_thread;
     my $ip;
-    my $max_procs;
-    my $pm;
-    my $description;
 
     #============================================
     # Begin ForkManager (multiple core / process)
     #============================================
-    $max_procs = $params->{CORE_DISCOVERY} * $params->{THREADS_DISCOVERY};
+    my $max_procs = $params->{CORE_DISCOVERY} * $params->{THREADS_DISCOVERY};
+    my $pm;
     if ($params->{CORE_DISCOVERY} > 1) {
         $pm = Parallel::ForkManager->new($max_procs);
     }
@@ -504,30 +498,31 @@ sub startThreads {
 
             # Send infos to server :
             if ($sendstart == 0) {
-                my $xml_thread = {};
-                $xml_thread->{AGENT}->{START} = '1';
-                $xml_thread->{AGENT}->{AGENTVERSION} = $self->{config}->{VERSION};
-                $xml_thread->{MODULEVERSION} = $VERSION;
-                $xml_thread->{PROCESSNUMBER} = $params->{PID};
+                my $xml_thread = {
+                    AGENT => {
+                        START => '1',
+                        AGENTVERSION => $self->{config}->{VERSION}
+                    },
+                    MODULEVERSION => $VERSION,
+                    PROCESSNUMBER => $params->{PID}
+                };
                 $self->sendInformations({
                     data => $xml_thread
                 });
-                undef($xml_thread);
                 $sendstart = 1;
             }
 
             # Send NB ips to server :
-            $xml_thread = {};
-            $xml_thread->{AGENT}->{NBIP} = $nbip;
-            $xml_thread->{PROCESSNUMBER} = $params->{PID};
+            my $xml_thread = {
+                AGENT => { NBIP => $nbip },
+                PROCESSNUMBER => $params->{PID}
+            };
             {
                 lock $sendbylwp;
                 $self->sendInformations({
                     data => $xml_thread
                 });
             }
-            undef($xml_thread);
-
 
             while($exit != 1) {
                 sleep 2;
@@ -574,15 +569,15 @@ sub startThreads {
         $pm->wait_all_children;
     }
     # Send infos to server :
-    undef($xml_thread);
-    $xml_thread->{AGENT}->{END} = '1';
-    $xml_thread->{MODULEVERSION} = $VERSION;
-    $xml_thread->{PROCESSNUMBER} = $params->{PID};
+    my $xml_thread = {
+        AGENT => { END => 1 },
+        MODULEVERSION => $VERSION,
+        PROCESSNUMBER => $params->{PID}
+    };
     sleep 1; # Wait for threads be terminated
     $self->sendInformations({
         data => $xml_thread
     });
-    undef($xml_thread);
 
     return;
 }
