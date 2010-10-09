@@ -180,7 +180,6 @@ sub startThreads {
     }
 
     my @Thread;
-    my $xml_Thread : shared = q{}; # Empty string
     for(my $p = 0; $p < $params->{CORE_DISCOVERY}; $p++) {
         if ($params->{CORE_DISCOVERY} > 1) {
             my $pid = $pm->start and next;
