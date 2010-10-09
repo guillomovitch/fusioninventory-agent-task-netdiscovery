@@ -523,21 +523,24 @@ sub startThreads {
 
             while($exit != 1) {
                 sleep 2;
-                foreach my $idx (1..$maxIdx) {
-                    if (!defined($sentxml->{$idx})) {
-                        my $data = $storage->restore({
-                            idx => $idx
-                        });
+                foreach my $idx (1 .. $maxIdx) {
+                    next unless $sentxml->{$idx};
 
-                        $self->sendInformations({
-                            data => $data
-                        });
-                        $sentxml->{$idx} = 1;
-                        $storage->remove({
-                            idx => $idx
-                        });
-                        sleep 1;
-                    }
+                    my $data = $storage->restore({
+                        idx => $idx
+                    });
+
+                    $self->sendInformations({
+                        data => $data
+                    });
+
+                    $sentxml->{$idx} = 1;
+
+                    $storage->remove({
+                        idx => $idx
+                    });
+
+                    sleep 1;
                 }
             }
 
