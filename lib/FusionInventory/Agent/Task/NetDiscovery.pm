@@ -60,7 +60,7 @@ sub run {
 
 
 sub startThreads {
-    my ($self, $params) = @_;
+    my ($self) = @_;
 
     my $nb_threads_discovery = $self->{NETDISCOVERY}->{PARAM}->[0]->{THREADS_DISCOVERY};
     my $nb_core_discovery    = $self->{NETDISCOVERY}->{PARAM}->[0]->{CORE_DISCOVERY};
