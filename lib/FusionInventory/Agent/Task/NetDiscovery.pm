@@ -275,14 +275,6 @@ sub startThreads {
             }
             $loop_action = 0;
 
-#         if ($nbip > ($nb_ip_per_thread * 4)) {
-#            
-#         } elsif ($nbip > $nb_ip_per_thread) {
-#            $params->{THREADS_DISCOVERY} = int($nbip / $nb_ip_per_thread) + 4;
-#         } else {
-#            $params->{THREADS_DISCOVERY} = $nbip;
-#         }
-
             CONTINUE:
 #$self->{logger}->debug("LOOP : ".$loop_action);
             $loop_nbthreads = $params->{THREADS_DISCOVERY};
@@ -307,7 +299,7 @@ sub startThreads {
                     $k++;
                     $Thread[$i][$j] = threads->create(
                         'handleIPRange',
-                        $i,
+                        $p,
                         $j,
                         $authlist,
                         $self,
