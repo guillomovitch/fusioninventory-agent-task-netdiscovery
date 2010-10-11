@@ -317,94 +317,23 @@ sub startThreads {
                     $threads_run = 1;
                     $k++;
                     $Thread[$p][$j] = threads->create(
-                        sub {
-                            my $p = shift;
-                            my $t = shift;
-                            my $authlistt = shift;
-                            my $self = shift;
-                            my $loopthread = 0;
-                            my $loopbigthread = 0;
-                            my $count = 0;
-                            my $device_id;
-                            my $xml_threadt;
-
-                            $self->{logger}->debug("Core $p - Thread $t created");
-                            while ($loopbigthread != 1) {
-                                ##### WAIT ACTION #####
-                                $loopthread = 0;
-                                while ($loopthread != 1) {
-#$self->{logger}->debug("[".$t."] : waiting...");
-                                    if ($ThreadAction{$t} == 3) { # STOP
-                                        $ThreadState{$t} = "2";
-                                        $self->{logger}->debug("Core $p - Thread $t deleted");
-                                        return;
-                                    } elsif ($ThreadAction{$t} != 0) { # RUN
-                                        $ThreadState{$t} = "1";
-                                        $loopthread  = 1;
-                                    }
-                                    sleep 1;
-                                }
-                                ##### RUN ACTION #####
-#$self->{logger}->debug("[".$t."] : run...");
-                                $loopthread = 0;
-                                while ($loopthread != 1) {
-                                    $device_id = q{}; # Empty string
-                                    {
-                                        lock $iplist2;
-                                        if (keys %{$iplist2} != 0) {
-                                            my @keys = sort keys %{$iplist2};
-                                            $device_id = pop @keys;
-                                            delete $iplist2->{$device_id};
-                                        } else {
-                                            $loopthread = 1;
-                                        }
-                                    }
-                                    if ($loopthread != 1) {
-                                        my $datadevice = $self->discoveryIpThreaded({
-                                                ip                  => $iplist->{$device_id}->{IP},
-                                                entity              => $iplist->{$device_id}->{ENTITY},
-                                                authlist            => $authlistt,
-                                                ModuleNmapScanner   => $ModuleNmapScanner,
-                                                ModuleNetNBName     => $ModuleNetNBName,
-                                                ModuleNmapParser    => $ModuleNmapParser,
-                                                ModuleNetSNMP       => $ModuleNetSNMP,
-                                                dico                => $dico
-                                            });
-                                        undef $iplist->{$device_id}->{IP};
-                                        undef $iplist->{$device_id}->{ENTITY};
-
-                                        if (keys %{$datadevice}) {
-                                            $xml_threadt->{DEVICE}->[$count] = $datadevice;
-                                            $xml_threadt->{MODULEVERSION} = $VERSION;
-                                            $xml_threadt->{PROCESSNUMBER} = $params->{PID};
-                                            $count++;
-                                        }
-                                    }
-                                    if (($count == 4) || (($loopthread eq "1") && ($count > 0))) {
-                                        $maxIdx++;
-                                        $storage->save({
-                                            idx => $maxIdx,
-                                            data => $xml_threadt
-                                        });
-
-                                        $count = 0;
-                                    }
-                                }
-                                ##### CHANGE STATE #####
-                                if ($ThreadAction{$t} == 2) { # STOP
-                                    $ThreadState{$t} = 2;
-                                    $ThreadAction{$t} = 0;
-#$self->{logger}->debug("[".$t."] : stoping...");
-                                    $self->{logger}->debug("Core $p - Thread $t deleted");
-                                    return;
-                                } elsif ($ThreadAction{$t} == 1) { # PAUSE
-                                    $ThreadState{$t} = 0;
-                                    $ThreadAction{$t} = 0;
-                                }
-                            }
-                        }, $p, $j, $authlist, $self
+                        'handleIPRange',
+                        $p,
+                        $j,
+                        $authlist,
+                        $self,
+                        \%ThreadAction,
+                        \%ThreadState,
+                        $iplist,
+                        $iplist2,
+                        $ModuleNmapParser,
+                        $ModuleNmapScanner,
+                        $ModuleNetNBName,
+                        $ModuleNetSNMP,
+                        $dico,
+                        $maxIdx,
+                        $params->{PID}
                     )->detach();
-
 
                     if ($k == 4) {
                         sleep 1;
@@ -601,6 +530,92 @@ sub sendInformations{
         message => $xmlMsg,
         url     => $self->{target}->getUrl()
     });
+}
+
+sub handleIPRange {
+    my ($p, $t, $authlistt, $self,  $ThreadAction, $ThreadState, $iplist2, $iplist, $ModuleNmapScanner, $ModuleNmapParser, $ModuleNetNBName, $ModuleNetSNMP, $dico, $maxIdx, $pid) = @_;
+
+    my $storage = $self->{target}->getStorage();
+    my $loopthread = 0;
+    my $loopbigthread = 0;
+    my $count = 0;
+    my $device_id;
+    my $xml_threadt;
+
+    $self->{logger}->debug("Core $p - Thread $t created");
+    while ($loopbigthread != 1) {
+        ##### WAIT ACTION #####
+        $loopthread = 0;
+        while ($loopthread != 1) {
+    #$self->{logger}->debug("[".$t."] : waiting...");
+            if ($ThreadAction->{$t} == 3) { # STOP
+                $ThreadState->{$t} = "2";
+                $self->{logger}->debug("Core $p - Thread $t deleted");
+                return;
+            } elsif ($ThreadAction->{$t} != 0) { # RUN
+                $ThreadState->{$t} = "1";
+                $loopthread  = 1;
+            }
+            sleep 1;
+        }
+        ##### RUN ACTION #####
+    #$self->{logger}->debug("[".$t."] : run...");
+        $loopthread = 0;
+        while ($loopthread != 1) {
+            $device_id = q{}; # Empty string
+            {
+                lock $iplist2;
+                if (keys %{$iplist2} != 0) {
+                    my @keys = sort keys %{$iplist2};
+                    $device_id = pop @keys;
+                    delete $iplist2->{$device_id};
+                } else {
+                    $loopthread = 1;
+                }
+            }
+            if ($loopthread != 1) {
+                my $datadevice = $self->discoveryIpThreaded({
+                        ip                  => $iplist->{$device_id}->{IP},
+                        entity              => $iplist->{$device_id}->{ENTITY},
+                        authlist            => $authlistt,
+                        ModuleNmapScanner   => $ModuleNmapScanner,
+                        ModuleNetNBName     => $ModuleNetNBName,
+                        ModuleNmapParser    => $ModuleNmapParser,
+                        ModuleNetSNMP       => $ModuleNetSNMP,
+                        dico                => $dico
+                    });
+                undef $iplist->{$device_id}->{IP};
+                undef $iplist->{$device_id}->{ENTITY};
+
+                if (keys %{$datadevice}) {
+                    $xml_threadt->{DEVICE}->[$count] = $datadevice;
+                    $xml_threadt->{MODULEVERSION} = $VERSION;
+                    $xml_threadt->{PROCESSNUMBER} = $pid;
+                    $count++;
+                }
+            }
+            if (($count == 4) || (($loopthread eq "1") && ($count > 0))) {
+                $maxIdx++;
+                $storage->save({
+                    idx => $maxIdx,
+                    data => $xml_threadt
+                });
+
+                $count = 0;
+            }
+        }
+        ##### CHANGE STATE #####
+        if ($ThreadAction->{$t} == 2) { # STOP
+            $ThreadState->{$t} = 2;
+            $ThreadAction->{$t} = 0;
+    #$self->{logger}->debug("[".$t."] : stoping...");
+            $self->{logger}->debug("Core $p - Thread $t deleted");
+            return;
+        } elsif ($ThreadAction->{$t} == 1) { # PAUSE
+            $ThreadState->{$t} = 0;
+            $ThreadAction->{$t} = 0;
+        }
+    }
 }
 
 sub discoveryIpThreaded {
