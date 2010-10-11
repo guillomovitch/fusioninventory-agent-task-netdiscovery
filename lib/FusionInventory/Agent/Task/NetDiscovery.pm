@@ -707,21 +707,25 @@ sub discoveryIpThreaded {
             }
             for my $key ( keys %{$params->{authlist}} ) {
                 if ($params->{authlist}->{$key}->{VERSION} eq $snmpv) {
-                    my $session = FusionInventory::Agent::SNMP->new({
-                        version      => $params->{authlist}->{$key}->{VERSION},
-                        hostname     => $params->{ip},
-                        community    => $params->{authlist}->{$key}->{COMMUNITY},
-                        username     => $params->{authlist}->{$key}->{USERNAME},
-                        authpassword => $params->{authlist}->{$key}->{AUTHPASSPHRASE},
-                        authprotocol => $params->{authlist}->{$key}->{AUTHPROTOCOL},
-                        privpassword => $params->{authlist}->{$key}->{PRIVPASSPHRASE},
-                        privprotocol => $params->{authlist}->{$key}->{PRIVPROTOCOL},
-                        translate    => 1,
-                    });
-
-                    if (!defined($session->{SNMPSession}->{session})) {
-                        #print("SNMP ERROR: %s.\n", $error);
-                        #               print "[".$params->{ip}."] GNERROR ()".$authlist->{$key}->{VERSION}."\n";
+                    my $session;
+                    eval {
+                        $session = FusionInventory::Agent::SNMP->new({
+                            version      => $params->{authlist}->{$key}->{VERSION},
+                            hostname     => $params->{ip},
+                            community    => $params->{authlist}->{$key}->{COMMUNITY},
+                            username     => $params->{authlist}->{$key}->{USERNAME},
+                            authpassword => $params->{authlist}->{$key}->{AUTHPASSPHRASE},
+                            authprotocol => $params->{authlist}->{$key}->{AUTHPROTOCOL},
+                            privpassword => $params->{authlist}->{$key}->{PRIVPASSPHRASE},
+                            privprotocol => $params->{authlist}->{$key}->{PRIVPROTOCOL},
+                            translate    => 1,
+                        });
+                    };
+                    if ($EVAL_ERROR) {
+                        $self->{logger}->error(
+                            "Unable to create SNMP session for " .
+                            "$params->{device}->{IP}: $EVAL_ERROR"
+                        );
                     } else {
 
                         #print "[".$params->{ip}."] GNE () \n";
