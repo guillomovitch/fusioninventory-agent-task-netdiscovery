@@ -172,10 +172,9 @@ sub startThreads {
     #============================================
     # Begin ForkManager (multiple core / process)
     #============================================
-    my $max_procs = $params->{CORE_DISCOVERY} * $params->{THREADS_DISCOVERY};
     my $pm;
     if ($params->{CORE_DISCOVERY} > 1) {
-        $pm = Parallel::ForkManager->new($max_procs);
+        $pm = Parallel::ForkManager->new($params->{CORE_DISCOVERY});
     }
 
     my @Thread;
