@@ -498,7 +498,7 @@ sub startThreads {
                 my $xml_thread = {
                     AGENT => {
                         START => '1',
-                        AGENTVERSION => $self->{config}->{VERSION}
+                        AGENTVERSION => $FusionInventory::Agent::VERSION,
                     },
                     MODULEVERSION => $VERSION,
                     PROCESSNUMBER => $params->{PID}
