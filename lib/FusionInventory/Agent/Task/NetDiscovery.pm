@@ -159,7 +159,6 @@ sub startThreads {
     # Dispatch IPs to different core
     my $iplist = {};
     my $iplist2 = &share({});
-    my %ArgumentsThread;
     my $maxIdx : shared = 0;
     my $sendstart = 0;
 
@@ -292,16 +291,6 @@ sub startThreads {
             for(my $j = 0 ; $j < $params->{THREADS_DISCOVERY} ; $j++) {
                 $ThreadState{$j} = "0";
                 $ThreadAction{$j} = "0";
-            }
-            #==================================
-            # Prepare in variables devices to query
-            #==================================
-            $ArgumentsThread{'id'}[$p] = &share([]);
-
-            my $i = 0;
-
-            while ($i < $params->{THREADS_DISCOVERY}) {
-                $i++;
             }
             #===================================
             # Create Thread management others threads
