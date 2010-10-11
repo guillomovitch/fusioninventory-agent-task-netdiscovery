@@ -504,19 +504,19 @@ sub startThreads {
 }
 
 
-sub sendInformations{
-    my ($self, $message) = @_;
+sub sendInformations {
+    my ($self, $content) = @_;
 
-    my $xmlMsg = FusionInventory::Agent::XML::Query::SimpleMessage->new({
+    my $message = FusionInventory::Agent::XML::Query::SimpleMessage->new({
         logger => $self->{logger},
         deviceid => $self->{deviceid},
         msg    => {
             QUERY   => 'NETDISCOVERY',
-            CONTENT => $message->{data},
+            CONTENT => $content->{data},
         },
     });
     $self->{transmitter}->send({
-        message => $xmlMsg,
+        message => $message,
         url     => $self->{target}->getUrl()
     });
 }
