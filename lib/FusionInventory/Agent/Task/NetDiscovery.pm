@@ -293,10 +293,8 @@ sub startThreads {
                 #===================================
                 # Create all Threads
                 #===================================
-                my $k = 0;
                 for(my $j = 0; $j < $params->{THREADS_DISCOVERY}; $j++) {
                     $threads_run = 1;
-                    $k++;
                     $Thread[$i][$j] = threads->create(
                         'handleIPRange',
                         $i,
@@ -316,10 +314,8 @@ sub startThreads {
                         $params->{PID}
                     )->detach();
 
-                    if ($k == 4) {
-                        sleep 1;
-                        $k = 0;
-                    }
+                    # sleep one second every 4 threads
+                    sleep 1 unless $j % 4;
                 }
                 ##### Start Thread Management #####
                 my $Threadmanagement = threads->create(
