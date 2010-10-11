@@ -177,7 +177,7 @@ sub startThreads {
     }
 
     my @Thread;
-    for (my $p = 0; $p < $params->{CORE_DISCOVERY}; $p++) {
+    for (my $i = 0; $i < $params->{CORE_DISCOVERY}; $i++) {
         if ($params->{CORE_DISCOVERY} > 1) {
             my $pid = $pm->start and next;
         }
@@ -305,9 +305,9 @@ sub startThreads {
                 for(my $j = 0; $j < $params->{THREADS_DISCOVERY}; $j++) {
                     $threads_run = 1;
                     $k++;
-                    $Thread[$p][$j] = threads->create(
+                    $Thread[$i][$j] = threads->create(
                         'handleIPRange',
-                        $p,
+                        $i,
                         $j,
                         $authlist,
                         $self,
