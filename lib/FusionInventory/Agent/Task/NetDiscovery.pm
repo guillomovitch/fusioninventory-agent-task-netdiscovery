@@ -176,7 +176,6 @@ sub startThreads {
         $pm = Parallel::ForkManager->new($params->{CORE_DISCOVERY});
     }
 
-    my @Thread;
     for (my $i = 0; $i < $params->{CORE_DISCOVERY}; $i++) {
         if ($params->{CORE_DISCOVERY} > 1) {
             my $pid = $pm->start and next;
@@ -186,8 +185,9 @@ sub startThreads {
         my $loop_action : shared = 1;
         my $exit : shared = 0;
 
-        my %ThreadState : shared;
-        my %ThreadAction : shared;
+        my @Thread;
+        my $ThreadState : shared;
+        my $ThreadAction : shared;
         $iplist = &share({});
         my $loop_nbthreads : shared;
         my $sendbylwp : shared;
@@ -281,8 +281,8 @@ sub startThreads {
 
 
             for(my $j = 0 ; $j < $params->{THREADS_DISCOVERY} ; $j++) {
-                $ThreadState{$j} = "0";
-                $ThreadAction{$j} = "0";
+                $ThreadState->[$j] = "0";
+                $ThreadAction->[$j] = "0";
             }
             #===================================
             # Create Thread management others threads
@@ -299,12 +299,12 @@ sub startThreads {
                     $k++;
                     $Thread[$i][$j] = threads->create(
                         'handleIPRange',
-                        $p,
+                        $i,
                         $j,
                         $authlist,
                         $self,
-                        \%ThreadAction,
-                        \%ThreadState,
+                        $ThreadAction,
+                        $ThreadState,
                         $iplist,
                         $iplist2,
                         $ModuleNmapParser,
@@ -339,8 +339,8 @@ sub startThreads {
 
                                 ## Start + end working threads (faire fonction) ##
                                 for($i = 0 ; $i < $loop_nbthreads ; $i++) {
-                                    $ThreadAction{$i} = "2";
-                                    #$ThreadState{$i} = "1";
+                                    $ThreadAction->[$i] = "2";
+                                    #$ThreadState->[$i] = "1";
                                 }
                                 ## Fonction etat des working threads (s'ils sont arretes) ##
                                 $count = 0;
@@ -348,7 +348,7 @@ sub startThreads {
 
                                 while ($loopthread != 1) {
                                     for($i = 0 ; $i < $loop_nbthreads ; $i++) {
-                                        if ($ThreadState{$i} == 2) {
+                                        if ($ThreadState->[$i] == 2) {
                                             $count++;
                                         }
                                     }
@@ -365,8 +365,8 @@ sub startThreads {
                             } elsif (($loop_action == 1) && ($exit eq "2")) {
                                 ## Start + pause working Threads (faire fonction) ##
                                 for($i = 0 ; $i < $loop_nbthreads ; $i++) {
-                                    $ThreadAction{$i} = "1";
-                                    #$ThreadState{$i} = "1";
+                                    $ThreadAction->[$i] = "1";
+                                    #$ThreadState->[$i] = "1";
                                 }
                                 sleep 1;
 
@@ -377,7 +377,7 @@ sub startThreads {
                                 while ($loopthread != 1) {
                                     for($i = 0 ; $i < $loop_nbthreads ; $i++) {
                                         #print "ThreadState ".$i." = ".$ThreadState{$i}."\n";
-                                        if ($ThreadState{$i} == 0) {
+                                        if ($ThreadState->[$i] == 0) {
                                             $count++;
                                         }
                                     }
@@ -529,12 +529,12 @@ sub handleIPRange {
         $loopthread = 0;
         while ($loopthread != 1) {
     #$self->{logger}->debug("[".$t."] : waiting...");
-            if ($ThreadAction->{$t} == 3) { # STOP
-                $ThreadState->{$t} = "2";
+            if ($ThreadAction->[$t] == 3) { # STOP
+                $ThreadState->[$t] = "2";
                 $self->{logger}->debug("Core $p - Thread $t deleted");
                 return;
-            } elsif ($ThreadAction->{$t} != 0) { # RUN
-                $ThreadState->{$t} = "1";
+            } elsif ($ThreadAction->[$t] != 0) { # RUN
+                $ThreadState->[$t] = "1";
                 $loopthread  = 1;
             }
             sleep 1;
@@ -587,14 +587,14 @@ sub handleIPRange {
         }
         ##### CHANGE STATE #####
         if ($ThreadAction->{$t} == 2) { # STOP
-            $ThreadState->{$t} = 2;
-            $ThreadAction->{$t} = 0;
+            $ThreadState->[$t] = 2;
+            $ThreadAction->[$t] = 0;
     #$self->{logger}->debug("[".$t."] : stoping...");
             $self->{logger}->debug("Core $p - Thread $t deleted");
             return;
-        } elsif ($ThreadAction->{$t} == 1) { # PAUSE
-            $ThreadState->{$t} = 0;
-            $ThreadAction->{$t} = 0;
+        } elsif ($ThreadAction->[$t] == 1) { # PAUSE
+            $ThreadState->[$t] = 0;
+            $ThreadAction->[$t] = 0;
         }
     }
 }
