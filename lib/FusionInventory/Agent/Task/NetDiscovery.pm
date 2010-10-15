@@ -131,25 +131,24 @@ sub startThreads {
     }
     $self->{logger}->debug("Dico loaded.");
 
-    my $ModuleNmapParser = Nmap::Parser->require();
-    my $ModuleNmapScanner = Nmap::Scanner->require();
-    if (!$ModuleNmapParser && !$ModuleNmapScanner) {
-        $self->{logger}->debug(
-            "Can't load Nmap::Parser && map::Scanner. Nmap can't be used!"
-        );
+    if (! Nmap::Parser->require()) {
+        if (! Nmap::Scanner->require()) {
+            $self->{logger}->debug(
+                "Can't load Nmap::Parser or Nmap::Scanner. Nmap can't be used!"
+            );
+        }
     }
 
-    my $ModuleNetNBName = Net::NBName->require();
-    if (!$ModuleNetNBName) {
+    if (! Net::NBName->require()) {
         $self->{logger}->debug(
             "Can't load Net::NBName. Netbios detection can't be used!"
         );
     }
 
-    my $ModuleNetSNMP = FusionInventory::Agent::SNMP->require();
-    if (!$ModuleNetSNMP) {
+    if (! FusionInventory::Agent::SNMP->require()) {
         $self->{logger}->debug(
-            "Can't load FusionInventory::Agent::SNMP. SNMP detection can't be used!"
+            "Can't load FusionInventory::Agent::SNMP. SNMP detection can't be ".
+            "used!"
         );
     }
 
@@ -305,10 +304,6 @@ sub startThreads {
                         $ThreadState,
                         $iplist,
                         $iplist2,
-                        $ModuleNmapParser,
-                        $ModuleNmapScanner,
-                        $ModuleNetNBName,
-                        $ModuleNetSNMP,
                         $dico,
                         $maxIdx,
                         $params->{PID}
@@ -510,7 +505,7 @@ sub sendInformations {
 }
 
 sub handleIPRange {
-    my ($p, $t, $authlistt, $self,  $ThreadAction, $ThreadState, $iplist2, $iplist, $ModuleNmapScanner, $ModuleNmapParser, $ModuleNetNBName, $ModuleNetSNMP, $dico, $maxIdx, $pid) = @_;
+    my ($p, $t, $authlistt, $self,  $ThreadAction, $ThreadState, $iplist2, $iplist, $dico, $maxIdx, $pid) = @_;
 
     my $storage = $self->{target}->getStorage();
     my $loopthread = 0;
@@ -555,10 +550,6 @@ sub handleIPRange {
                         ip                  => $iplist->{$device_id}->{IP},
                         entity              => $iplist->{$device_id}->{ENTITY},
                         authlist            => $authlistt,
-                        ModuleNmapScanner   => $ModuleNmapScanner,
-                        ModuleNetNBName     => $ModuleNetNBName,
-                        ModuleNmapParser    => $ModuleNmapParser,
-                        ModuleNetSNMP       => $ModuleNetSNMP,
                         dico                => $dico
                     });
                 undef $iplist->{$device_id}->{IP};
@@ -610,7 +601,7 @@ sub discoveryIpThreaded {
     }
 
     #** Nmap discovery
-    if ($params->{ModuleNmapParser} == 1) {
+    if ($INC{'Nmap/Parser.pm'}) {
         my $scan = Nmap::Parser->new();
         if (eval {$scan->parsescan('nmap','-sP --system-dns --max-retries 1 --max-rtt-timeout 1000 ', $params->{ip})}) {
             if (exists($scan->{HOSTS}->{$params->{ip}}->{addrs}->{mac}->{addr})) {
@@ -624,7 +615,7 @@ sub discoveryIpThreaded {
                 $datadevice->{DNSHOSTNAME} = specialChar($scan->{HOSTS}->{$params->{ip}}->{hostnames}->[0]);
             }
         }
-    } elsif ($params->{ModuleNmapScanner} == 1) {
+    } elsif ($INC{'Nmap/Scanner.pm'}) {
         my $scan = Nmap::Scanner->new();
         my $results_nmap = $scan->scan('-sP --system-dns --max-retries 1 --max-rtt-timeout 1000 '.$params->{ip});
 
@@ -651,7 +642,7 @@ sub discoveryIpThreaded {
     }
 
     #** Netbios discovery
-    if ($params->{ModuleNetNBName} == 1) {
+    if ($INC{'Net/NBName.pm'}) {
         my $nb = Net::NBName->new();
 
         my $domain = q{}; # Empty string
@@ -686,8 +677,7 @@ sub discoveryIpThreaded {
         }
     }
 
-
-    if ($params->{ModuleNetSNMP} == 1) {
+    if ($INC{'Net/SNMP.pm'}) {
         my $i = "4";
         my $snmpv;
         while ($i != 1) {
