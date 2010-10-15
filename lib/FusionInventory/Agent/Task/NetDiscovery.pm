@@ -590,16 +590,16 @@ sub handleIPRange {
 sub discoveryIpThreaded {
     my ($self, $params) = @_;
 
-    my $datadevice = {};
-
     if (!defined($params->{ip})) {
         $self->{logger}->debug("ip address empty...");
-        return $datadevice;
+        return;
     }
     if ($params->{ip} !~ /^$ip_address_pattern$/ ) {
         $self->{logger}->debug("Invalid ip address...");
-        return $datadevice;
+        return;
     }
+
+    my $datadevice;
 
     #** Nmap discovery
     if ($INC{'Nmap/Parser.pm'}) {
