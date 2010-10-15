@@ -656,7 +656,7 @@ sub discoveryIpThreaded {
 
         my $ns = $nb->node_status($params->{ip});
         if ($ns) {
-            for my $rr ($ns->names) {
+            foreach my $rr ($ns->names) {
                 if ($rr->suffix == 0 && $rr->G eq "GROUP") {
                     $device->{WORKGROUP} = specialChar($rr->name);
                 }
@@ -690,7 +690,7 @@ sub discoveryIpThreaded {
             if ($i == 2) {
                 $snmpv = "2c";
             }
-            for my $key ( keys %{$params->{authlist}} ) {
+            foreach my $key ( keys %{$params->{authlist}} ) {
                 if ($params->{authlist}->{$key}->{VERSION} eq $snmpv) {
                     my $session;
                     eval {
@@ -728,7 +728,7 @@ sub discoveryIpThreaded {
                             #print "[".$params->{ip}."][YES][".$authlist->{$key}->{VERSION}."][".$authlist->{$key}->{COMMUNITY}."]\n";
 
                             # ***** manufacturer specifications
-                            for my $m ( keys %{$self->{modules}} ) {
+                            foreach my $m ( keys %{$self->{modules}} ) {
                                 $description = $m->discovery($description, $session,$description);
                             }
 
