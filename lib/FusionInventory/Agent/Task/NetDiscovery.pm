@@ -599,7 +599,7 @@ sub discoveryIpThreaded {
         return;
     }
 
-    my $datadevice;
+    my $device;
 
     #** Nmap discovery
     if ($INC{'Nmap/Parser.pm'}) {
@@ -612,13 +612,13 @@ sub discoveryIpThreaded {
             );
             my $host = $scan->{HOSTS}->{$params->{ip}};
             if (exists $host->{addrs}->{mac}->{addr}) {
-                $datadevice->{MAC} = specialChar($host->{addrs}->{mac}->{addr});
+                $device->{MAC} = specialChar($host->{addrs}->{mac}->{addr});
             }
             if (exists $host->{addrs}->{mac}->{vendor}) {
-                $datadevice->{NETPORTVENDOR} = specialChar($host->{addrs}->{mac}->{vendor});
+                $device->{NETPORTVENDOR} = specialChar($host->{addrs}->{mac}->{vendor});
             }
             if (exists $host->{hostnames}->[0]) {
-                $datadevice->{DNSHOSTNAME} = specialChar($host->{hostnames}->[0]);
+                $device->{DNSHOSTNAME} = specialChar($host->{hostnames}->[0]);
             }
         };
     } elsif ($INC{'Nmap/Scanner.pm'}) {
@@ -633,15 +633,15 @@ sub discoveryIpThreaded {
         foreach my $key (keys (%{$$results_nmap{'ALLHOSTS'}})) {
             for (my $n=0; $n<@{$$results_nmap{'ALLHOSTS'}{$key}{'addresses'}}; $n++) {
                 if ($$results_nmap{'ALLHOSTS'}{$key}{'addresses'}[$n]{'addrtype'} eq "mac") {
-                    $datadevice->{MAC} = specialChar($$results_nmap{'ALLHOSTS'}{$key}{'addresses'}[$n]{'addr'});
+                    $device->{MAC} = specialChar($$results_nmap{'ALLHOSTS'}{$key}{'addresses'}[$n]{'addr'});
                     if (defined($$results_nmap{'ALLHOSTS'}{$key}{'addresses'}[$n]{'vendor'})) {
-                        $datadevice->{NETPORTVENDOR} = specialChar($$results_nmap{'ALLHOSTS'}{$key}{'addresses'}[$n]{'vendor'});
+                        $device->{NETPORTVENDOR} = specialChar($$results_nmap{'ALLHOSTS'}{$key}{'addresses'}[$n]{'vendor'});
                     }
                 }
             }
             if (exists($$results_nmap{'ALLHOSTS'}{$key}{'hostnames'}[0])) {
                 for (my $n=0; $n<@{$$results_nmap{'ALLHOSTS'}{$key}{'hostnames'}}; $n++) {
-                    $datadevice->{DNSHOSTNAME} = specialChar($$results_nmap{'ALLHOSTS'}{$key}{'hostnames'}[$n]{'name'});
+                    $device->{DNSHOSTNAME} = specialChar($$results_nmap{'ALLHOSTS'}{$key}{'hostnames'}[$n]{'name'});
                 }
             }
         }
@@ -660,25 +660,25 @@ sub discoveryIpThreaded {
         if ($ns) {
             for my $rr ($ns->names) {
                 if ($rr->suffix == 0 && $rr->G eq "GROUP") {
-                    $datadevice->{WORKGROUP} = specialChar($rr->name);
+                    $device->{WORKGROUP} = specialChar($rr->name);
                 }
                 if ($rr->suffix == 3 && $rr->G eq "UNIQUE") {
-                    $datadevice->{USERSESSION} = specialChar($rr->name);
+                    $device->{USERSESSION} = specialChar($rr->name);
                 }
                 if ($rr->suffix == 0 && $rr->G eq "UNIQUE") {
                     $machine = $rr->name unless $rr->name =~ /^IS~/;
-                    $datadevice->{NETBIOSNAME} = specialChar($machine);
+                    $device->{NETBIOSNAME} = specialChar($machine);
                     $type = 1;
                 }
             }
-            if (not exists($datadevice->{MAC})) {
+            if (not exists($device->{MAC})) {
                 my $NetbiosMac = $ns->mac_address;
                 $NetbiosMac =~ tr/-/:/;
-                $datadevice->{MAC} = $NetbiosMac;
-            } elsif ($datadevice->{MAC} !~ /^([0-9a-f]{2}([:]|$)){6}$/i) {
+                $device->{MAC} = $NetbiosMac;
+            } elsif ($device->{MAC} !~ /^([0-9a-f]{2}([:]|$)){6}$/i) {
                 my $NetbiosMac = $ns->mac_address;
                 $NetbiosMac =~ tr/-/:/;
-                $datadevice->{MAC} = $NetbiosMac;
+                $device->{MAC} = $NetbiosMac;
             }
         }
     }
@@ -734,7 +734,7 @@ sub discoveryIpThreaded {
                                 $description = $m->discovery($description, $session,$description);
                             }
 
-                            $datadevice->{DESCRIPTION} = $description;
+                            $device->{DESCRIPTION} = $description;
 
                             my $name = $session->snmpGet({
                                 oid => '.1.3.6.1.2.1.1.5.0',
@@ -760,23 +760,23 @@ sub discoveryIpThreaded {
                             $serial =~ s/^\s+//;
                             $serial =~ s/\s+$//;
                             $serial =~ s/(\.{2,})*//g;
-                            $datadevice->{SERIAL} = $serial;
-                            $datadevice->{MODELSNMP} = $model;
-                            $datadevice->{AUTHSNMP} = $key;
-                            $datadevice->{TYPE} = $type;
-                            $datadevice->{SNMPHOSTNAME} = $name;
-                            $datadevice->{IP} = $params->{ip};
-                            if (exists($datadevice->{MAC})) {
-                                if ($datadevice->{MAC} !~ /^([0-9a-f]{2}([:]|$)){6}$/i) {
-                                    $datadevice->{MAC} = $mac;
+                            $device->{SERIAL} = $serial;
+                            $device->{MODELSNMP} = $model;
+                            $device->{AUTHSNMP} = $key;
+                            $device->{TYPE} = $type;
+                            $device->{SNMPHOSTNAME} = $name;
+                            $device->{IP} = $params->{ip};
+                            if (exists($device->{MAC})) {
+                                if ($device->{MAC} !~ /^([0-9a-f]{2}([:]|$)){6}$/i) {
+                                    $device->{MAC} = $mac;
                                 }
                             } else {
-                                $datadevice->{MAC} = $mac;
+                                $device->{MAC} = $mac;
                             }
-                            $datadevice->{ENTITY} = $params->{entity};
-                            $self->{logger}->debug("[$params->{ip}] ".Dumper($datadevice));
+                            $device->{ENTITY} = $params->{entity};
+                            $self->{logger}->debug("[$params->{ip}] ".Dumper($device));
                             #$session->close;
-                            return $datadevice;
+                            return $device;
                         } else {
                             #debug($log,"[".$params->{ip}."][NO][".$$authSNMP_discovery{$key}{'version'}."][".$$authSNMP_discovery{$key}{'community'}."] ".$session->error, "",$PID,$Bin);
                             $session->close;
@@ -787,17 +787,17 @@ sub discoveryIpThreaded {
         }
     }
 
-    if (exists($datadevice->{MAC})) {
-        $datadevice->{MAC} =~ tr/A-F/a-f/;
+    if (exists($device->{MAC})) {
+        $device->{MAC} =~ tr/A-F/a-f/;
     }
-    if ((exists($datadevice->{MAC})) || (exists($datadevice->{DNSHOSTNAME})) || (exists($datadevice->{NETBIOSNAME}))) {
-        $datadevice->{IP} = $params->{ip};
-        $datadevice->{ENTITY} = $params->{entity};
-        $self->{logger}->debug("[$params->{ip}] ".Dumper($datadevice));
+    if ((exists($device->{MAC})) || (exists($device->{DNSHOSTNAME})) || (exists($device->{NETBIOSNAME}))) {
+        $device->{IP} = $params->{ip};
+        $device->{ENTITY} = $params->{entity};
+        $self->{logger}->debug("[$params->{ip}] ".Dumper($device));
     } else {
         $self->{logger}->debug("[$params->{ip}] Not found !");
     }
-    return $datadevice;
+    return $device;
 }
 
 
