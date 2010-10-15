@@ -604,7 +604,12 @@ sub discoveryIpThreaded {
     #** Nmap discovery
     if ($INC{'Nmap/Parser.pm'}) {
         my $scan = Nmap::Parser->new();
-        if (eval {$scan->parsescan('nmap','-sP --system-dns --max-retries 1 --max-rtt-timeout 1000 ', $params->{ip})}) {
+        eval {
+            $scan->parsescan(
+                'nmap',
+                '-sP --system-dns --max-retries 1 --max-rtt-timeout 1000 ',
+                $params->{ip}
+            );
             if (exists($scan->{HOSTS}->{$params->{ip}}->{addrs}->{mac}->{addr})) {
                 $datadevice->{MAC} = specialChar($scan->{HOSTS}->{$params->{ip}}->{addrs}->{mac}->{addr});
             }
@@ -615,7 +620,7 @@ sub discoveryIpThreaded {
             if (exists($scan->{HOSTS}->{$params->{ip}}->{hostnames}->[0])) {
                 $datadevice->{DNSHOSTNAME} = specialChar($scan->{HOSTS}->{$params->{ip}}->{hostnames}->[0]);
             }
-        }
+        };
     } elsif ($INC{'Nmap/Scanner.pm'}) {
         my $scan = Nmap::Scanner->new();
         my $results_nmap = $scan->scan('-sP --system-dns --max-retries 1 --max-rtt-timeout 1000 '.$params->{ip});
