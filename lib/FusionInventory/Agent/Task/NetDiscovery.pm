@@ -18,6 +18,7 @@ use Net::IP;
 use UNIVERSAL::require;
 use XML::Simple;
 
+use FusionInventory::Agent::Regexp;
 use FusionInventory::Agent::Storage;
 use FusionInventory::Agent::Task::NetDiscovery::Dico;
 use FusionInventory::Agent::Task::NetDiscovery::Manufacturer::HewlettPackard;
@@ -595,7 +596,7 @@ sub discoveryIpThreaded {
         $self->{logger}->debug("ip address empty...");
         return $datadevice;
     }
-    if ($params->{ip} !~ m/^(\d\d?\d?)\.(\d\d?\d?)\.(\d\d?\d?)\.(\d\d?\d?)/ ) {
+    if ($params->{ip} !~ /^$ip_address_pattern$/ ) {
         $self->{logger}->debug("Invalid ip address...");
         return $datadevice;
     }
