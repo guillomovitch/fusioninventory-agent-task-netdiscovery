@@ -611,15 +611,13 @@ sub discoveryIpThreaded {
                 $params->{ip}
             );
             my $host = $scan->{HOSTS}->{$params->{ip}};
-            if (exists $host->{addrs}->{mac}->{addr}) {
-                $device->{MAC} = specialChar($host->{addrs}->{mac}->{addr});
-            }
-            if (exists $host->{addrs}->{mac}->{vendor}) {
-                $device->{NETPORTVENDOR} = specialChar($host->{addrs}->{mac}->{vendor});
-            }
-            if (exists $host->{hostnames}->[0]) {
-                $device->{DNSHOSTNAME} = specialChar($host->{hostnames}->[0]);
-            }
+            $device->{DNSHOSTNAME} = specialChar($host->{hostnames}->[0])
+                if $host->{hostnames}->[0];
+            $device->{MAC} = specialChar($host->{addrs}->{mac}->{addr})
+                if $host->{addrs}->{mac}->{addr};
+            $device->{NETPORTVENDOR} = specialChar(
+                $host->{addrs}->{mac}->{vendor}
+            ) if $host->{addrs}->{mac}->{vendor};
         };
     } elsif ($INC{'Nmap/Scanner.pm'}) {
         my $scan = Nmap::Scanner->new();
