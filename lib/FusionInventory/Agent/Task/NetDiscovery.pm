@@ -610,15 +610,15 @@ sub discoveryIpThreaded {
                 '-sP --system-dns --max-retries 1 --max-rtt-timeout 1000 ',
                 $params->{ip}
             );
-            if (exists($scan->{HOSTS}->{$params->{ip}}->{addrs}->{mac}->{addr})) {
-                $datadevice->{MAC} = specialChar($scan->{HOSTS}->{$params->{ip}}->{addrs}->{mac}->{addr});
+            my $host = $scan->{HOSTS}->{$params->{ip}};
+            if (exists $host->{addrs}->{mac}->{addr}) {
+                $datadevice->{MAC} = specialChar($host->{addrs}->{mac}->{addr});
             }
-            if (exists($scan->{HOSTS}->{$params->{ip}}->{addrs}->{mac}->{vendor})) {
-                $datadevice->{NETPORTVENDOR} = specialChar($scan->{HOSTS}->{$params->{ip}}->{addrs}->{mac}->{vendor});
+            if (exists $host->{addrs}->{mac}->{vendor}) {
+                $datadevice->{NETPORTVENDOR} = specialChar($host->{addrs}->{mac}->{vendor});
             }
-
-            if (exists($scan->{HOSTS}->{$params->{ip}}->{hostnames}->[0])) {
-                $datadevice->{DNSHOSTNAME} = specialChar($scan->{HOSTS}->{$params->{ip}}->{hostnames}->[0]);
+            if (exists $host->{hostnames}->[0]) {
+                $datadevice->{DNSHOSTNAME} = specialChar($host->{hostnames}->[0]);
             }
         };
     } elsif ($INC{'Nmap/Scanner.pm'}) {
