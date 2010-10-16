@@ -669,104 +669,93 @@ sub discoveryIpThreaded {
     }
 
     if ($INC{'Net/SNMP.pm'}) {
-        my $i = "4";
-        my $snmpv;
-        while ($i != 1) {
-            $i--;
-            $snmpv = $i;
-            if ($i == 2) {
-                $snmpv = "2c";
-            }
-            foreach my $key ( keys %{$params->{authlist}} ) {
-                if ($params->{authlist}->{$key}->{VERSION} eq $snmpv) {
-                    my $session;
-                    eval {
-                        $session = FusionInventory::Agent::SNMP->new({
-                            version      => $params->{authlist}->{$key}->{VERSION},
-                            hostname     => $params->{ip},
-                            community    => $params->{authlist}->{$key}->{COMMUNITY},
-                            username     => $params->{authlist}->{$key}->{USERNAME},
-                            authpassword => $params->{authlist}->{$key}->{AUTHPASSPHRASE},
-                            authprotocol => $params->{authlist}->{$key}->{AUTHPROTOCOL},
-                            privpassword => $params->{authlist}->{$key}->{PRIVPASSPHRASE},
-                            privprotocol => $params->{authlist}->{$key}->{PRIVPROTOCOL},
-                            translate    => 1,
-                        });
-                    };
-                    if ($EVAL_ERROR) {
-                        $self->{logger}->error(
-                            "Unable to create SNMP session for " .
-                            "$params->{device}->{IP}: $EVAL_ERROR"
-                        );
-                    } else {
+        foreach my $key ( keys %{$params->{authlist}} ) {
+            my $session;
+            eval {
+                $session = FusionInventory::Agent::SNMP->new({
+                    hostname     => $params->{ip},
+                    version      => $params->{authlist}->{$key}->{VERSION},
+                    community    => $params->{authlist}->{$key}->{COMMUNITY},
+                    username     => $params->{authlist}->{$key}->{USERNAME},
+                    authpassword => $params->{authlist}->{$key}->{AUTHPASSPHRASE},
+                    authprotocol => $params->{authlist}->{$key}->{AUTHPROTOCOL},
+                    privpassword => $params->{authlist}->{$key}->{PRIVPASSPHRASE},
+                    privprotocol => $params->{authlist}->{$key}->{PRIVPROTOCOL},
+                    translate    => 1,
+                });
+            };
+            if ($EVAL_ERROR) {
+                $self->{logger}->error(
+                    "Unable to create SNMP session for " .
+                    "$params->{device}->{IP}: $EVAL_ERROR"
+                );
+            } else {
 
-                        #print "[".$params->{ip}."] GNE () \n";
-                        my $description = $session->snmpGet({
-                            oid => '1.3.6.1.2.1.1.1.0',
-                            up  => 1,
-                        });
-                        if ($description =~ m/No response from remote host/) {
-                            #print "[".$params->{ip}."][NO][".$authlist->{$key}->{VERSION}."][".$authlist->{$key}->{COMMUNITY}."]\n";
-                            #$session->close;
-                        } elsif ($description =~ m/No buffer space available/) {
-                            #print "[".$params->{ip}."][NO][".$authlist->{$key}->{VERSION}."][".$authlist->{$key}->{COMMUNITY}."]\n";
-                            #$session->close;
-                        } elsif ($description ne "null") {
-                            #print "[".$params->{ip}."][YES][".$authlist->{$key}->{VERSION}."][".$authlist->{$key}->{COMMUNITY}."]\n";
+                #print "[".$params->{ip}."] GNE () \n";
+                my $description = $session->snmpGet({
+                    oid => '1.3.6.1.2.1.1.1.0',
+                    up  => 1,
+                });
+                if ($description =~ m/No response from remote host/) {
+                    #print "[".$params->{ip}."][NO][".$authlist->{$key}->{VERSION}."][".$authlist->{$key}->{COMMUNITY}."]\n";
+                    #$session->close;
+                } elsif ($description =~ m/No buffer space available/) {
+                    #print "[".$params->{ip}."][NO][".$authlist->{$key}->{VERSION}."][".$authlist->{$key}->{COMMUNITY}."]\n";
+                    #$session->close;
+                } elsif ($description ne "null") {
+                    #print "[".$params->{ip}."][YES][".$authlist->{$key}->{VERSION}."][".$authlist->{$key}->{COMMUNITY}."]\n";
 
-                            # ***** manufacturer specifications
-                            foreach my $m ( keys %{$self->{modules}} ) {
-                                $description = $m->discovery($description, $session,$description);
-                            }
-
-                            $device->{DESCRIPTION} = $description;
-
-                            my $name = $session->snmpGet({
-                                oid => '.1.3.6.1.2.1.1.5.0',
-                                up  => 1,
-                            });
-                            if ($name eq "null") {
-                                $name = q{}; # Empty string
-                            }
-                            # Serial Number
-                            my ($serial, $type, $model, $mac) = verifySerial($description, $session, $params->{dico});
-                            if ($serial eq "Received noSuchName(2) error-status at error-index 1") {
-                                $serial = q{}; # Empty string
-                            }
-                            if ($serial eq "noSuchInstance") {
-                                $serial = q{}; # Empty string
-                            }
-                            if ($serial eq "noSuchObject") {
-                                $serial = q{}; # Empty string
-                            }
-                            if ($serial eq "No response from remote host") {
-                                $serial = q{}; # Empty string
-                            }
-                            $serial =~ s/^\s+//;
-                            $serial =~ s/\s+$//;
-                            $serial =~ s/(\.{2,})*//g;
-                            $device->{SERIAL} = $serial;
-                            $device->{MODELSNMP} = $model;
-                            $device->{AUTHSNMP} = $key;
-                            $device->{TYPE} = $type;
-                            $device->{SNMPHOSTNAME} = $name;
-                            $device->{IP} = $params->{ip};
-                            if (exists($device->{MAC})) {
-                                if ($device->{MAC} !~ /^([0-9a-f]{2}([:]|$)){6}$/i) {
-                                    $device->{MAC} = $mac;
-                                }
-                            } else {
-                                $device->{MAC} = $mac;
-                            }
-                            $device->{ENTITY} = $params->{entity};
-                            $self->{logger}->debug("[$params->{ip}] ".Dumper($device));
-                            #$session->close;
-                            return $device;
-                        } else {
-                            #debug($log,"[".$params->{ip}."][NO][".$$authSNMP_discovery{$key}{'version'}."][".$$authSNMP_discovery{$key}{'community'}."] ".$session->error, "",$PID,$Bin);
-                            $session->close;
-                        }
+                    # ***** manufacturer specifications
+                    foreach my $m ( keys %{$self->{modules}} ) {
+                        $description = $m->discovery($description, $session,$description);
                     }
+
+                    $device->{DESCRIPTION} = $description;
+
+                    my $name = $session->snmpGet({
+                        oid => '.1.3.6.1.2.1.1.5.0',
+                        up  => 1,
+                    });
+                    if ($name eq "null") {
+                        $name = q{}; # Empty string
+                    }
+                    # Serial Number
+                    my ($serial, $type, $model, $mac) = verifySerial($description, $session, $params->{dico});
+                    if ($serial eq "Received noSuchName(2) error-status at error-index 1") {
+                        $serial = q{}; # Empty string
+                    }
+                    if ($serial eq "noSuchInstance") {
+                        $serial = q{}; # Empty string
+                    }
+                    if ($serial eq "noSuchObject") {
+                        $serial = q{}; # Empty string
+                    }
+                    if ($serial eq "No response from remote host") {
+                        $serial = q{}; # Empty string
+                    }
+                    $serial =~ s/^\s+//;
+                    $serial =~ s/\s+$//;
+                    $serial =~ s/(\.{2,})*//g;
+                    $device->{SERIAL} = $serial;
+                    $device->{MODELSNMP} = $model;
+                    $device->{AUTHSNMP} = $key;
+                    $device->{TYPE} = $type;
+                    $device->{SNMPHOSTNAME} = $name;
+                    $device->{IP} = $params->{ip};
+                    if (exists($device->{MAC})) {
+                        if ($device->{MAC} !~ /^([0-9a-f]{2}([:]|$)){6}$/i) {
+                            $device->{MAC} = $mac;
+                        }
+                    } else {
+                        $device->{MAC} = $mac;
+                    }
+                    $device->{ENTITY} = $params->{entity};
+                    $self->{logger}->debug("[$params->{ip}] ".Dumper($device));
+                    #$session->close;
+                    return $device;
+                } else {
+                    #debug($log,"[".$params->{ip}."][NO][".$$authSNMP_discovery{$key}{'version'}."][".$$authSNMP_discovery{$key}{'community'}."] ".$session->error, "",$PID,$Bin);
+                    $session->close;
                 }
             }
         }
