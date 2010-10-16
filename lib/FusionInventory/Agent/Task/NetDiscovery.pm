@@ -16,7 +16,6 @@ use English qw(-no_match_vars);
 use File::Find;
 use Net::IP;
 use UNIVERSAL::require;
-use XML::Simple;
 
 use FusionInventory::Agent::Regexp;
 use FusionInventory::Agent::Storage;
