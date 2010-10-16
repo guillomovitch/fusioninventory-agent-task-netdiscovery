@@ -807,112 +807,81 @@ sub specialChar {
 
 
 sub verifySerial {
-    my $description = shift;
-    my $session     = shift;
-    my $dico    = shift;
-
-    my $oid;
-    my $macreturn = q{}; # Empty string
-    my $modelreturn = q{}; # Empty string
-    my $serial;
-    my $serialreturn = q{}; # Empty string
+    my ($description, $session, $dico) = @_;
 
     $description =~ s/\n//g;
     $description =~ s/\r//g;
 
-    foreach my $num (@{$dico->{DEVICE}}) {
-        if ($num->{SYSDESCR} eq $description) {
+    my ($serial, $type, $model, $mac);
 
-            if (defined($num->{SERIAL})) {
-                $oid = $num->{SERIAL};
-                $serial = $session->snmpGet({
-                    oid => $oid,
-                    up  => 1,
-                });
-            }
+    # iterate the dictionnary until a model matches current description
+    foreach my $device (@{$dico->{DEVICE}}) {
+        next unless $device->{SYSDESCR} eq $description;
 
-            if (defined($serial)) {
+        if (exists $device->{SERIAL}) {
+            $serial = $session->snmpGet({
+                oid => $device->{SERIAL},
+                up  => 1,
+            });
+
+            if ($serial) {
                 $serial =~ s/\n//g;
                 $serial =~ s/\r//g;
-                $serialreturn = $serial;
             }
-            my $typereturn  = $num->{TYPE};
-            if (defined($num->{MODELSNMP})) {
-                $modelreturn = $num->{MODELSNMP};
-            }
-            if (defined($num->{MAC})) {
-                $oid = $num->{MAC};
-                $macreturn  = $session->snmpGet({
-                    oid => $oid,
-                    up  => 0,
-                });
-
-            }
-
-            $oid = $num->{MACDYN};
-            my $Arraymacreturn = {};
-            $Arraymacreturn  = $session->snmpWalk({
-                    oid_start => $oid
-                });
-            while ( (undef,my $macadress) = each (%{$Arraymacreturn}) ) {
-                if (($macadress ne '') && ($macadress ne '0:0:0:0:0:0') && ($macadress ne '00:00:00:00:00:00')) {
-                    if ($macreturn !~ /^([0-9a-f]{2}([:]|$)){6}$/i) {
-                        $macreturn = $macadress;
-                    }
-                }
-            }
-
-            # Mac of switchs
-            if ($macreturn !~ /^([0-9a-f]{2}([:]|$)){6}$/i) {
-                $oid = ".1.3.6.1.2.1.17.1.1.0";
-                $macreturn  = $session->snmpGet({
-                        oid => $oid,
-                        up  => 0,
-                    });
-            }
-            if ($macreturn !~ /^([0-9a-f]{2}([:]|$)){6}$/i) {
-                $oid = ".1.3.6.1.2.1.2.2.1.6";
-                my $Arraymacreturn = {};
-                $Arraymacreturn  = $session->snmpWalk({
-                        oid_start => $oid
-                    });
-                while ( (undef,my $macadress) = each (%{$Arraymacreturn}) ) {
-                    if (($macadress ne '') && ($macadress ne '0:0:0:0:0:0') && ($macadress ne '00:00:00:00:00:00')) {
-                        if ($macreturn !~ /^([0-9a-f]{2}([:]|$)){6}$/i) {
-                            $macreturn = $macadress;
-                        }
-                    }
-                }
-            }
-
-            return ($serialreturn, $typereturn, $modelreturn, $macreturn);
         }
-    }
 
-    # Mac of switchs
-    if ($macreturn !~ /^([0-9a-f]{2}([:]|$)){6}$/i) {
-        $oid = ".1.3.6.1.2.1.17.1.1.0";
-        $macreturn  = $session->snmpGet({
-            oid => $oid,
-            up  => 0,
-        });
-    }
-    if ($macreturn !~ /^([0-9a-f]{2}([:]|$)){6}$/i) {
-        $oid = ".1.3.6.1.2.1.2.2.1.6";
-        my $Arraymacreturn = {};
-        $Arraymacreturn  = $session->snmpWalk({
-            oid_start => $oid
-        });
-        while ( (undef,my $macadress) = each (%{$Arraymacreturn}) ) {
-            if (($macadress ne '') && ($macadress ne '0:0:0:0:0:0') && ($macadress ne '00:00:00:00:00:00')) {
-                if ($macreturn !~ /^([0-9a-f]{2}([:]|$)){6}$/i) {
-                    $macreturn = $macadress;
+        $type  = $device->{TYPE};
+
+        $model = $device->{MODELSNMP};
+        
+        if (exists $device->{MAC}) {
+            $mac  = $session->snmpGet({
+                oid => $device->{MAC},
+                up  => 0,
+            });
+        }
+
+        if (exists $device->{MACDYN}) {
+            my $macadresses = $session->snmpWalk({
+                oid_start => $device->{MACDYN}
+            });
+
+            foreach my $macadress (values %{$macadresses}) {
+                next unless $macadress;
+                next if $macadress eq '0:0:0:0:0:0';
+                next if $macadress eq '00:00:00:00:00:00';
+                if ($mac !~ /^([0-9a-f]{2}([:]|$)){6}$/i) {
+                    $mac = $macadress;
                 }
             }
         }
+
+        # Mac of switchs
+        if ($mac !~ /^([0-9a-f]{2}([:]|$)){6}$/i) {
+            $mac = $session->snmpGet({
+                oid => ".1.3.6.1.2.1.17.1.1.0",
+                up  => 0,
+            });
+        }
+
+        if ($mac !~ /^([0-9a-f]{2}([:]|$)){6}$/i) {
+            my $macadresses = $session->snmpWalk({
+                oid_start => ".1.3.6.1.2.1.2.2.1.6"
+            });
+            foreach my $macadress (values %{$macadresses}) {
+                next unless $macadress;
+                next if $macadress eq '0:0:0:0:0:0';
+                next if $macadress eq '00:00:00:00:00:00';
+                if ($mac !~ /^([0-9a-f]{2}([:]|$)){6}$/i) {
+                    $mac = $macadress;
+                }
+            }
+        }
+
+        last;
     }
 
-    return ("", 0, "", "");
+    return ($serial, $type, $model, $mac);
 }
 
 sub initModList {
