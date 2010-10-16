@@ -616,7 +616,7 @@ sub discoveryIpThreaded {
     if ($INC{'Net/SNMP.pm'}) {
         _discoverBySNMP(
             $params->{ip}, $device,
-            $params->{authlist}, $params->{dico}, $params->{entity},
+            $params->{authlist}, $params->{dico},
             $self->{logger}, $self->{modules}
         );
     }
@@ -713,7 +713,7 @@ sub _discoverByNetBios {
 }
 
 sub _discoverBySNMP {
-    my ($ip, $device, $authlist, $dico, $entity, $logger, $modules) = @_;
+    my ($ip, $device, $authlist, $dico, $logger, $modules) = @_;
 
     foreach my $key (keys %{$authlist}) {
         my $auth = $authlist->{$key};
@@ -785,7 +785,6 @@ sub _discoverBySNMP {
         } else {
             $device->{MAC} = $mac;
         }
-        $device->{ENTITY} = $entity;
         $logger->debug("[$ip] ".Dumper($device));
 
         $session->close();
