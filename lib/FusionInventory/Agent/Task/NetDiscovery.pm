@@ -645,15 +645,15 @@ sub discoveryIpThreaded {
 
         my $ns = $nb->node_status($params->{ip});
         if ($ns) {
-            foreach my $rr ($ns->names) {
-                if ($rr->suffix == 0 && $rr->G eq "GROUP") {
+            foreach my $rr ($ns->names()) {
+                if ($rr->suffix() == 0 && $rr->G() eq "GROUP") {
                     $device->{WORKGROUP} = specialChar($rr->name);
                 }
-                if ($rr->suffix == 3 && $rr->G eq "UNIQUE") {
+                if ($rr->suffix() == 3 && $rr->G() eq "UNIQUE") {
                     $device->{USERSESSION} = specialChar($rr->name);
                 }
-                if ($rr->suffix == 0 && $rr->G eq "UNIQUE") {
-                    my $machine = $rr->name unless $rr->name =~ /^IS~/;
+                if ($rr->suffix() == 0 && $rr->G() eq "UNIQUE") {
+                    my $machine = $rr->name() unless $rr->name() =~ /^IS~/;
                     $device->{NETBIOSNAME} = specialChar($machine);
                 }
             }
@@ -661,7 +661,7 @@ sub discoveryIpThreaded {
                 ! exists $device->{MAC} ||
                 $device->{MAC} !~ /^([0-9a-f]{2}([:]|$)){6}$/i
             ) {
-                my $NetbiosMac = $ns->mac_address;
+                my $NetbiosMac = $ns->mac_address();
                 $NetbiosMac =~ tr/-/:/;
                 $device->{MAC} = $NetbiosMac;
             }
