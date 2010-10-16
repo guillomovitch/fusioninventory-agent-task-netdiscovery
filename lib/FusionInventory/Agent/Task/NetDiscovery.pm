@@ -647,8 +647,6 @@ sub discoveryIpThreaded {
     if ($INC{'Net/NBName.pm'}) {
         my $nb = Net::NBName->new();
 
-        my $domain = q{}; # Empty string
-        my $user = q{}; # Empty string
         my $machine = q{}; # Empty string
         my $type = 0;
 
