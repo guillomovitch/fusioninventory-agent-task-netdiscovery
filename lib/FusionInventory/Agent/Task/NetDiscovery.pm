@@ -600,158 +600,25 @@ sub discoveryIpThreaded {
 
     my $device;
 
-    #** Nmap discovery
+    # NMAP discovery
     if ($INC{'Nmap/Parser.pm'}) {
-        my $scan = Nmap::Parser->new();
-        eval {
-            $scan->parsescan(
-                'nmap',
-                '-sP --system-dns --max-retries 1 --max-rtt-timeout 1000 ',
-                $params->{ip}
-            );
-            my $host = $scan->{HOSTS}->{$params->{ip}};
-            $device->{DNSHOSTNAME} = specialChar($host->{hostnames}->[0])
-                if $host->{hostnames}->[0];
-            $device->{MAC} = specialChar($host->{addrs}->{mac}->{addr})
-                if $host->{addrs}->{mac}->{addr};
-            $device->{NETPORTVENDOR} = specialChar(
-                $host->{addrs}->{mac}->{vendor}
-            ) if $host->{addrs}->{mac}->{vendor};
-        };
+        _discoverByNmapParser($params->{ip}, $device);
     } elsif ($INC{'Nmap/Scanner.pm'}) {
-        my $scan = Nmap::Scanner->new();
-        my $results_nmap = $scan->scan('-sP --system-dns --max-retries 1 --max-rtt-timeout 1000 '.$params->{ip});
-
-        foreach my $key (keys (%{$$results_nmap{'ALLHOSTS'}})) {
-            for (my $n=0; $n<@{$$results_nmap{'ALLHOSTS'}{$key}{'addresses'}}; $n++) {
-                if ($$results_nmap{'ALLHOSTS'}{$key}{'addresses'}[$n]{'addrtype'} eq "mac") {
-                    $device->{MAC} = specialChar($$results_nmap{'ALLHOSTS'}{$key}{'addresses'}[$n]{'addr'});
-                    if (defined($$results_nmap{'ALLHOSTS'}{$key}{'addresses'}[$n]{'vendor'})) {
-                        $device->{NETPORTVENDOR} = specialChar($$results_nmap{'ALLHOSTS'}{$key}{'addresses'}[$n]{'vendor'});
-                    }
-                }
-            }
-            if (exists($$results_nmap{'ALLHOSTS'}{$key}{'hostnames'}[0])) {
-                for (my $n=0; $n<@{$$results_nmap{'ALLHOSTS'}{$key}{'hostnames'}}; $n++) {
-                    $device->{DNSHOSTNAME} = specialChar($$results_nmap{'ALLHOSTS'}{$key}{'hostnames'}[$n]{'name'});
-                }
-            }
-        }
+        _discoverByNmapScanner($params->{ip}, $device);
     }
 
-    #** Netbios discovery
+    # Netbios discovery
     if ($INC{'Net/NBName.pm'}) {
-        my $nb = Net::NBName->new();
-
-        my $ns = $nb->node_status($params->{ip});
-        if ($ns) {
-            foreach my $rr ($ns->names()) {
-                if ($rr->suffix() == 0 && $rr->G() eq "GROUP") {
-                    $device->{WORKGROUP} = specialChar($rr->name);
-                }
-                if ($rr->suffix() == 3 && $rr->G() eq "UNIQUE") {
-                    $device->{USERSESSION} = specialChar($rr->name);
-                }
-                if ($rr->suffix() == 0 && $rr->G() eq "UNIQUE") {
-                    my $machine = $rr->name() unless $rr->name() =~ /^IS~/;
-                    $device->{NETBIOSNAME} = specialChar($machine);
-                }
-            }
-            if (
-                ! exists $device->{MAC} ||
-                $device->{MAC} !~ /^([0-9a-f]{2}([:]|$)){6}$/i
-            ) {
-                my $NetbiosMac = $ns->mac_address();
-                $NetbiosMac =~ tr/-/:/;
-                $device->{MAC} = $NetbiosMac;
-            }
-        }
+        _discoverByNetbios($params->{ip}, $device);
     }
 
+    # SNMP discovery
     if ($INC{'Net/SNMP.pm'}) {
-        foreach my $key ( keys %{$params->{authlist}} ) {
-            my $auth = $params->{authlist}->{$key};
-            my $session;
-            eval {
-                $session = FusionInventory::Agent::SNMP->new({
-                    hostname     => $params->{ip},
-                    version      => $auth->{VERSION},
-                    community    => $auth->{COMMUNITY},
-                    username     => $auth->{USERNAME},
-                    authpassword => $auth->{AUTHPASSPHRASE},
-                    authprotocol => $auth->{AUTHPROTOCOL},
-                    privpassword => $auth->{PRIVPASSPHRASE},
-                    privprotocol => $auth->{PRIVPROTOCOL},
-                    translate    => 1,
-                });
-            };
-            if ($EVAL_ERROR) {
-                $self->{logger}->error(
-                    "Unable to create SNMP session for " .
-                    "$params->{device}->{IP}: $EVAL_ERROR"
-                );
-            } else {
-
-                my $description = $session->snmpGet({
-                    oid => '1.3.6.1.2.1.1.1.0',
-                    up  => 1,
-                });
-                if ($description =~ m/No response from remote host/) {
-                } elsif ($description =~ m/No buffer space available/) {
-                } elsif ($description ne "null") {
-                    # ***** manufacturer specifications
-                    foreach my $m ( keys %{$self->{modules}} ) {
-                        $description = $m->discovery($description, $session,$description);
-                    }
-
-                    $device->{DESCRIPTION} = $description;
-
-                    my $name = $session->snmpGet({
-                        oid => '.1.3.6.1.2.1.1.5.0',
-                        up  => 1,
-                    });
-                    if ($name eq "null") {
-                        $name = q{}; # Empty string
-                    }
-                    # Serial Number
-                    my ($serial, $type, $model, $mac) = verifySerial($description, $session, $params->{dico});
-                    if ($serial eq "Received noSuchName(2) error-status at error-index 1") {
-                        $serial = q{}; # Empty string
-                    }
-                    if ($serial eq "noSuchInstance") {
-                        $serial = q{}; # Empty string
-                    }
-                    if ($serial eq "noSuchObject") {
-                        $serial = q{}; # Empty string
-                    }
-                    if ($serial eq "No response from remote host") {
-                        $serial = q{}; # Empty string
-                    }
-                    $serial =~ s/^\s+//;
-                    $serial =~ s/\s+$//;
-                    $serial =~ s/(\.{2,})*//g;
-                    $device->{SERIAL} = $serial;
-                    $device->{MODELSNMP} = $model;
-                    $device->{AUTHSNMP} = $key;
-                    $device->{TYPE} = $type;
-                    $device->{SNMPHOSTNAME} = $name;
-                    $device->{IP} = $params->{ip};
-                    if (exists($device->{MAC})) {
-                        if ($device->{MAC} !~ /^([0-9a-f]{2}([:]|$)){6}$/i) {
-                            $device->{MAC} = $mac;
-                        }
-                    } else {
-                        $device->{MAC} = $mac;
-                    }
-                    $device->{ENTITY} = $params->{entity};
-                    $self->{logger}->debug("[$params->{ip}] ".Dumper($device));
-                    #$session->close;
-                    return $device;
-                } else {
-                    $session->close;
-                }
-            }
-        }
+        _discoverBySNMP(
+            $params->{ip}, $device,
+            $params->{authlist}, $params->{dico}, $params->{entity},
+            $self->{logger}, $self->{modules}
+        );
     }
 
     if (exists($device->{MAC})) {
@@ -767,6 +634,166 @@ sub discoveryIpThreaded {
     return $device;
 }
 
+sub _discoverByNmapParser {
+    my ($ip, $device) = @_;
+
+    my $scan = Nmap::Parser->new();
+    eval {
+        $scan->parsescan(
+            'nmap',
+            '-sP --system-dns --max-retries 1 --max-rtt-timeout 1000 ',
+            $ip
+        );
+        my $host = $scan->{HOSTS}->{$ip};
+        $device->{DNSHOSTNAME} = specialChar($host->{hostnames}->[0])
+            if $host->{hostnames}->[0];
+        $device->{MAC} = specialChar($host->{addrs}->{mac}->{addr})
+            if $host->{addrs}->{mac}->{addr};
+        $device->{NETPORTVENDOR} = specialChar(
+            $host->{addrs}->{mac}->{vendor}
+        ) if $host->{addrs}->{mac}->{vendor};
+    };
+}
+
+sub _discoverByNmapScanner {
+    my ($ip, $device) = @_;
+
+    my $scan = Nmap::Scanner->new();
+    my $results_nmap = $scan->scan('-sP --system-dns --max-retries 1 --max-rtt-timeout 1000' . $ip);
+
+    foreach my $key (keys (%{$$results_nmap{'ALLHOSTS'}})) {
+        for (my $n=0; $n<@{$$results_nmap{'ALLHOSTS'}{$key}{'addresses'}}; $n++) {
+            if ($$results_nmap{'ALLHOSTS'}{$key}{'addresses'}[$n]{'addrtype'} eq "mac") {
+                $device->{MAC} = specialChar($$results_nmap{'ALLHOSTS'}{$key}{'addresses'}[$n]{'addr'});
+                if (defined($$results_nmap{'ALLHOSTS'}{$key}{'addresses'}[$n]{'vendor'})) {
+                    $device->{NETPORTVENDOR} = specialChar($$results_nmap{'ALLHOSTS'}{$key}{'addresses'}[$n]{'vendor'});
+                }
+            }
+        }
+        if (exists($$results_nmap{'ALLHOSTS'}{$key}{'hostnames'}[0])) {
+            for (my $n=0; $n<@{$$results_nmap{'ALLHOSTS'}{$key}{'hostnames'}}; $n++) {
+                $device->{DNSHOSTNAME} = specialChar($$results_nmap{'ALLHOSTS'}{$key}{'hostnames'}[$n]{'name'});
+            }
+        }
+    }
+}
+
+sub _discoverByNetBios {
+    my ($ip, $device) = @_;
+
+    my $nb = Net::NBName->new();
+
+    my $ns = $nb->node_status($ip);
+    if ($ns) {
+        foreach my $rr ($ns->names()) {
+            if ($rr->suffix() == 0 && $rr->G() eq "GROUP") {
+                $device->{WORKGROUP} = specialChar($rr->name);
+            }
+            if ($rr->suffix() == 3 && $rr->G() eq "UNIQUE") {
+                $device->{USERSESSION} = specialChar($rr->name);
+            }
+            if ($rr->suffix() == 0 && $rr->G() eq "UNIQUE") {
+                my $machine = $rr->name() unless $rr->name() =~ /^IS~/;
+                $device->{NETBIOSNAME} = specialChar($machine);
+            }
+        }
+        if (
+            ! exists $device->{MAC} ||
+            $device->{MAC} !~ /^([0-9a-f]{2}([:]|$)){6}$/i
+        ) {
+            my $NetbiosMac = $ns->mac_address();
+            $NetbiosMac =~ tr/-/:/;
+            $device->{MAC} = $NetbiosMac;
+        }
+    }
+}
+
+sub _discoverBySNMP {
+    my ($ip, $device, $authlist, $dico, $entity, $logger, $modules) = @_;
+
+    foreach my $key (keys %{$authlist}) {
+        my $auth = $authlist->{$key};
+        my $session;
+        eval {
+            $session = FusionInventory::Agent::SNMP->new({
+                hostname     => $ip,
+                version      => $auth->{VERSION},
+                community    => $auth->{COMMUNITY},
+                username     => $auth->{USERNAME},
+                authpassword => $auth->{AUTHPASSPHRASE},
+                authprotocol => $auth->{AUTHPROTOCOL},
+                privpassword => $auth->{PRIVPASSPHRASE},
+                privprotocol => $auth->{PRIVPROTOCOL},
+                translate    => 1,
+            });
+        };
+        if ($EVAL_ERROR) {
+            $logger->error(
+                "Unable to create SNMP session for $ip: $EVAL_ERROR"
+            );
+        } else {
+
+            my $description = $session->snmpGet({
+                oid => '1.3.6.1.2.1.1.1.0',
+                up  => 1,
+            });
+            if ($description =~ m/No response from remote host/) {
+            } elsif ($description =~ m/No buffer space available/) {
+            } elsif ($description ne "null") {
+                # ***** manufacturer specifications
+                foreach my $m ( keys %{$modules} ) {
+                    $description = $m->discovery($description, $session,$description);
+                }
+
+                $device->{DESCRIPTION} = $description;
+
+                my $name = $session->snmpGet({
+                    oid => '.1.3.6.1.2.1.1.5.0',
+                    up  => 1,
+                });
+                if ($name eq "null") {
+                    $name = q{}; # Empty string
+                }
+                # Serial Number
+                my ($serial, $type, $model, $mac) = verifySerial($description, $session, $dico);
+                if ($serial eq "Received noSuchName(2) error-status at error-index 1") {
+                    $serial = q{}; # Empty string
+                }
+                if ($serial eq "noSuchInstance") {
+                    $serial = q{}; # Empty string
+                }
+                if ($serial eq "noSuchObject") {
+                    $serial = q{}; # Empty string
+                }
+                if ($serial eq "No response from remote host") {
+                    $serial = q{}; # Empty string
+                }
+                $serial =~ s/^\s+//;
+                $serial =~ s/\s+$//;
+                $serial =~ s/(\.{2,})*//g;
+                $device->{SERIAL} = $serial;
+                $device->{MODELSNMP} = $model;
+                $device->{AUTHSNMP} = $key;
+                $device->{TYPE} = $type;
+                $device->{SNMPHOSTNAME} = $name;
+                $device->{IP} = $ip;
+                if (exists($device->{MAC})) {
+                    if ($device->{MAC} !~ /^([0-9a-f]{2}([:]|$)){6}$/i) {
+                        $device->{MAC} = $mac;
+                    }
+                } else {
+                    $device->{MAC} = $mac;
+                }
+                $device->{ENTITY} = $entity;
+                $logger->debug("[$ip] ".Dumper($device));
+                #$session->close;
+                return $device;
+            } else {
+                $session->close;
+            }
+        }
+    }
+}
 
 
 sub specialChar {
