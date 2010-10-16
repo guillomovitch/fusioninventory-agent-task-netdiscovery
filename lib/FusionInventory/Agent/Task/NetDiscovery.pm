@@ -644,7 +644,6 @@ sub discoveryIpThreaded {
         my $nb = Net::NBName->new();
 
         my $machine = q{}; # Empty string
-        my $type = 0;
 
         my $ns = $nb->node_status($params->{ip});
         if ($ns) {
@@ -658,7 +657,6 @@ sub discoveryIpThreaded {
                 if ($rr->suffix == 0 && $rr->G eq "UNIQUE") {
                     $machine = $rr->name unless $rr->name =~ /^IS~/;
                     $device->{NETBIOSNAME} = specialChar($machine);
-                    $type = 1;
                 }
             }
             if (not exists($device->{MAC})) {
