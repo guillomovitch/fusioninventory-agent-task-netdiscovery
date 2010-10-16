@@ -622,10 +622,6 @@ sub discoveryIpThreaded {
         my $scan = Nmap::Scanner->new();
         my $results_nmap = $scan->scan('-sP --system-dns --max-retries 1 --max-rtt-timeout 1000 '.$params->{ip});
 
-        my $macaddress = q{}; # Empty string
-        my $hostname = q{}; # Empty string
-        my $netportvendor = q{}; # Empty string
-
         foreach my $key (keys (%{$$results_nmap{'ALLHOSTS'}})) {
             for (my $n=0; $n<@{$$results_nmap{'ALLHOSTS'}{$key}{'addresses'}}; $n++) {
                 if ($$results_nmap{'ALLHOSTS'}{$key}{'addresses'}[$n]{'addrtype'} eq "mac") {
