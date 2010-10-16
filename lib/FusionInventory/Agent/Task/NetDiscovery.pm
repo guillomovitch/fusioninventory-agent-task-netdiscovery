@@ -692,20 +692,13 @@ sub discoveryIpThreaded {
                 );
             } else {
 
-                #print "[".$params->{ip}."] GNE () \n";
                 my $description = $session->snmpGet({
                     oid => '1.3.6.1.2.1.1.1.0',
                     up  => 1,
                 });
                 if ($description =~ m/No response from remote host/) {
-                    #print "[".$params->{ip}."][NO][".$authlist->{$key}->{VERSION}."][".$authlist->{$key}->{COMMUNITY}."]\n";
-                    #$session->close;
                 } elsif ($description =~ m/No buffer space available/) {
-                    #print "[".$params->{ip}."][NO][".$authlist->{$key}->{VERSION}."][".$authlist->{$key}->{COMMUNITY}."]\n";
-                    #$session->close;
                 } elsif ($description ne "null") {
-                    #print "[".$params->{ip}."][YES][".$authlist->{$key}->{VERSION}."][".$authlist->{$key}->{COMMUNITY}."]\n";
-
                     # ***** manufacturer specifications
                     foreach my $m ( keys %{$self->{modules}} ) {
                         $description = $m->discovery($description, $session,$description);
@@ -755,7 +748,6 @@ sub discoveryIpThreaded {
                     #$session->close;
                     return $device;
                 } else {
-                    #debug($log,"[".$params->{ip}."][NO][".$$authSNMP_discovery{$key}{'version'}."][".$$authSNMP_discovery{$key}{'community'}."] ".$session->error, "",$PID,$Bin);
                     $session->close;
                 }
             }
