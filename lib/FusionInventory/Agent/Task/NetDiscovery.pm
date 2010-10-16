@@ -738,6 +738,7 @@ sub _discoverBySNMP {
             return;
         }
 
+        # description
         my $description = $session->snmpGet({
             oid => '1.3.6.1.2.1.1.1.0',
             up  => 1,
@@ -748,42 +749,34 @@ sub _discoverBySNMP {
             return;
         }
 
-        # ***** manufacturer specifications
         foreach my $m ( keys %{$modules} ) {
             $description = $m->discovery($description, $session,$description);
         }
 
         $device->{DESCRIPTION} = $description;
 
+        # name
         my $name = $session->snmpGet({
             oid => '.1.3.6.1.2.1.1.5.0',
             up  => 1,
         });
-        if ($name eq "null") {
-            $name = q{}; # Empty string
-        }
-        # Serial Number
-        my ($serial, $type, $model, $mac) = verifySerial($description, $session, $dico);
+        $device->{SNMPHOSTNAME} = $name;
+
+        # other parameters
+        my ($serial, $type, $model, $mac) = verifySerial(
+            $description, $session, $dico
+        );
         if ($serial eq "Received noSuchName(2) error-status at error-index 1") {
-            $serial = q{}; # Empty string
+            $serial = '';
+        } else {
+            $serial =~ s/^\s+//;
+            $serial =~ s/\s+$//;
+            $serial =~ s/(\.{2,})*//g;
         }
-        if ($serial eq "noSuchInstance") {
-            $serial = q{}; # Empty string
-        }
-        if ($serial eq "noSuchObject") {
-            $serial = q{}; # Empty string
-        }
-        if ($serial eq "No response from remote host") {
-            $serial = q{}; # Empty string
-        }
-        $serial =~ s/^\s+//;
-        $serial =~ s/\s+$//;
-        $serial =~ s/(\.{2,})*//g;
         $device->{SERIAL} = $serial;
         $device->{MODELSNMP} = $model;
         $device->{AUTHSNMP} = $key;
         $device->{TYPE} = $type;
-        $device->{SNMPHOSTNAME} = $name;
         $device->{IP} = $ip;
         if (exists($device->{MAC})) {
             if ($device->{MAC} !~ /^([0-9a-f]{2}([:]|$)){6}$/i) {
