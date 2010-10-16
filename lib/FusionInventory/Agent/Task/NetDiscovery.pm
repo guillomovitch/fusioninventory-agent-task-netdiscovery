@@ -670,17 +670,18 @@ sub discoveryIpThreaded {
 
     if ($INC{'Net/SNMP.pm'}) {
         foreach my $key ( keys %{$params->{authlist}} ) {
+            my $auth = $params->{authlist}->{$key};
             my $session;
             eval {
                 $session = FusionInventory::Agent::SNMP->new({
                     hostname     => $params->{ip},
-                    version      => $params->{authlist}->{$key}->{VERSION},
-                    community    => $params->{authlist}->{$key}->{COMMUNITY},
-                    username     => $params->{authlist}->{$key}->{USERNAME},
-                    authpassword => $params->{authlist}->{$key}->{AUTHPASSPHRASE},
-                    authprotocol => $params->{authlist}->{$key}->{AUTHPROTOCOL},
-                    privpassword => $params->{authlist}->{$key}->{PRIVPASSPHRASE},
-                    privprotocol => $params->{authlist}->{$key}->{PRIVPROTOCOL},
+                    version      => $auth->{VERSION},
+                    community    => $auth->{COMMUNITY},
+                    username     => $auth->{USERNAME},
+                    authpassword => $auth->{AUTHPASSPHRASE},
+                    authprotocol => $auth->{AUTHPROTOCOL},
+                    privpassword => $auth->{PRIVPASSPHRASE},
+                    privprotocol => $auth->{PRIVPROTOCOL},
                     translate    => 1,
                 });
             };
