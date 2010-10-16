@@ -623,7 +623,6 @@ sub discoveryIpThreaded {
         my $scan = Nmap::Scanner->new();
         my $results_nmap = $scan->scan('-sP --system-dns --max-retries 1 --max-rtt-timeout 1000 '.$params->{ip});
 
-        my $xml_nmap = XML::Simple->new();
         my $macaddress = q{}; # Empty string
         my $hostname = q{}; # Empty string
         my $netportvendor = q{}; # Empty string
