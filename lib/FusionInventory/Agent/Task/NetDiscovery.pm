@@ -621,10 +621,14 @@ sub discoveryIpThreaded {
         );
     }
 
-    if (exists($device->{MAC})) {
+    if (exists $device->{MAC}) {
         $device->{MAC} =~ tr/A-F/a-f/;
     }
-    if ((exists($device->{MAC})) || (exists($device->{DNSHOSTNAME})) || (exists($device->{NETBIOSNAME}))) {
+    if (
+        exists $device->{MAC} ||
+        exists $device->{DNSHOSTNAME} || 
+        exists $device->{NETBIOSNAME}
+    ) {
         $device->{IP} = $params->{ip};
         $device->{ENTITY} = $params->{entity};
         $self->{logger}->debug("[$params->{ip}] ".Dumper($device));
