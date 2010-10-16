@@ -657,11 +657,10 @@ sub discoveryIpThreaded {
                     $device->{NETBIOSNAME} = specialChar($machine);
                 }
             }
-            if (not exists($device->{MAC})) {
-                my $NetbiosMac = $ns->mac_address;
-                $NetbiosMac =~ tr/-/:/;
-                $device->{MAC} = $NetbiosMac;
-            } elsif ($device->{MAC} !~ /^([0-9a-f]{2}([:]|$)){6}$/i) {
+            if (
+                ! exists $device->{MAC} ||
+                $device->{MAC} !~ /^([0-9a-f]{2}([:]|$)){6}$/i
+            ) {
                 my $NetbiosMac = $ns->mac_address;
                 $NetbiosMac =~ tr/-/:/;
                 $device->{MAC} = $NetbiosMac;
