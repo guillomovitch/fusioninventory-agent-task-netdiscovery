@@ -785,7 +785,6 @@ sub _discoverBySNMP {
         } else {
             $device->{MAC} = $mac;
         }
-        $logger->debug("[$ip] ".Dumper($device));
 
         $session->close();
     }
