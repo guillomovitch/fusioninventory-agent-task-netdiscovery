@@ -643,8 +643,6 @@ sub discoveryIpThreaded {
     if ($INC{'Net/NBName.pm'}) {
         my $nb = Net::NBName->new();
 
-        my $machine = q{}; # Empty string
-
         my $ns = $nb->node_status($params->{ip});
         if ($ns) {
             foreach my $rr ($ns->names) {
@@ -655,7 +653,7 @@ sub discoveryIpThreaded {
                     $device->{USERSESSION} = specialChar($rr->name);
                 }
                 if ($rr->suffix == 0 && $rr->G eq "UNIQUE") {
-                    $machine = $rr->name unless $rr->name =~ /^IS~/;
+                    my $machine = $rr->name unless $rr->name =~ /^IS~/;
                     $device->{NETBIOSNAME} = specialChar($machine);
                 }
             }
