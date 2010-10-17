@@ -14,7 +14,13 @@ sub discovery {
         if ($description_new) {
             $description = $description_new;
         }
-    } elsif (($description eq "KYOCERA MITA Printing System") || ($description eq "KYOCERA Printer I/F") || ($description eq "SB-110")) {
+    }
+    
+    if (
+        $description eq "KYOCERA MITA Printing System" ||
+        $description eq "KYOCERA Printer I/F" ||
+        $description eq "SB-110"
+    ) {
         my $description_new = $session->snmpGet({
             oid => '.1.3.6.1.4.1.1347.42.5.1.1.2.1',
             up  => 1,

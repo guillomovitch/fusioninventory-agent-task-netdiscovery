@@ -15,6 +15,7 @@ sub discovery {
             $description = $description_new;
         }
     }
+
     return $description;
 }
 
