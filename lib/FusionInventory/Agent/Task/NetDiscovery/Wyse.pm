@@ -1,4 +1,4 @@
-package FusionInventory::Agent::Task::NetDiscovery::Manufacturer::Wyse;
+package FusionInventory::Agent::Task::NetDiscovery::Wyse;
 
 use strict;
 use warnings;

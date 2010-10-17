@@ -1,4 +1,4 @@
-package FusionInventory::Agent::Task::NetDiscovery::Manufacturer::Ddwrt;
+package FusionInventory::Agent::Task::NetDiscovery::Ddwrt;
 
 use strict;
 use warnings;

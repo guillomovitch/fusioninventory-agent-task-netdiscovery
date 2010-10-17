@@ -1,4 +1,4 @@
-package FusionInventory::Agent::Task::NetDiscovery::Manufacturer::Alcatel;
+package FusionInventory::Agent::Task::NetDiscovery::Alcatel;
 
 use strict;
 use warnings;

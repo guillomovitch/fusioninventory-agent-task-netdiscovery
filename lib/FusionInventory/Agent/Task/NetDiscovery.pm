@@ -20,7 +20,7 @@ use UNIVERSAL::require;
 use FusionInventory::Agent::Regexp;
 use FusionInventory::Agent::Storage;
 use FusionInventory::Agent::Task::NetDiscovery::Dico;
-use FusionInventory::Agent::Task::NetDiscovery::Manufacturer::HewlettPackard;
+use FusionInventory::Agent::Task::NetDiscovery::HewlettPackard;
 use FusionInventory::Agent::XML::Query::SimpleMessage;
 
 our $VERSION = '1.2';
@@ -29,94 +29,94 @@ my @dispatch_table = (
     {
         # alcatel
         match => qr/^\S+ Service Release/,
-        module => 'FusionInventory::Agent::Task::NetDiscovery::Manufacturer::Alcatel',
+        module => 'FusionInventory::Agent::Task::NetDiscovery::Alcatel',
         function => 'getDescription'
     },
     {
         match => qr/AXIS OfficeBasic Network Print Server/,
-        module => 'FusionInventory::Agent::Task::NetDiscovery::Manufacturer::Axis',
+        module => 'FusionInventory::Agent::Task::NetDiscovery::Axis',
         function => 'getDescription'
 
     },
     {
         # dd-wrt
         match => qr/Linux/,
-        module => 'FusionInventory::Agent::Task::NetDiscovery::Manufacturer::Ddwrt',
+        module => 'FusionInventory::Agent::Task::NetDiscovery::Ddwrt',
         function => 'getDescription'
     },
     {
         # dell switch
         match => 'Ethernet Switch',
-        module => 'FusionInventory::Agent::Task::NetDiscovery::Manufacturer::Dell',
+        module => 'FusionInventory::Agent::Task::NetDiscovery::Dell',
         function => 'getDescription'
     },
     {
         # Epson
         match => qr/EPSON Built-in/,
-        module => 'FusionInventory::Agent::Task::NetDiscovery::Manufacturer::Epson',
+        module => 'FusionInventory::Agent::Task::NetDiscovery::Epson',
         function => 'getDescriptionBuiltin'
     },
     {
         # Epson
         match => qr/EPSON Internal 10Base-T/,
-        module => 'FusionInventory::Agent::Task::NetDiscovery::Manufacturer::Epson',
+        module => 'FusionInventory::Agent::Task::NetDiscovery::Epson',
         function => 'getDescriptionInternal'
     },
     {
         match => qr/HP ETHERNET MULTI-ENVIRONMENT/,
-        module => 'FusionInventory::Agent::Task::NetDiscovery::Manufacturer::HewlettPackard',
+        module => 'FusionInventory::Agent::Task::NetDiscovery::HewlettPackard',
         function => 'getDescription'
     },
     {
         match => qr/A SNMP proxy agent, EEPROM/,
-        module => 'FusionInventory::Agent::Task::NetDiscovery::Manufacturer::HewlettPackard',
+        module => 'FusionInventory::Agent::Task::NetDiscovery::HewlettPackard',
         function => 'getDescription'
     },
     {
         # kyocera
         match => qr/,HP,JETDIRECT,J/,
-        module => 'FusionInventory::Agent::Task::NetDiscovery::Manufacturer::Kyocera',
+        module => 'FusionInventory::Agent::Task::NetDiscovery::Kyocera',
         function => 'getDescriptionHP'
     },
     {
         match => 'KYOCERA MITA Printing System',
-        module => 'FusionInventory::Agent::Task::NetDiscovery::Manufacturer::Kyocera',
+        module => 'FusionInventory::Agent::Task::NetDiscovery::Kyocera',
         function => 'getDescriptionOther'
     },
     {
         match => 'KYOCERA Printer I/F',
-        module => 'FusionInventory::Agent::Task::NetDiscovery::Manufacturer::Kyocera',
+        module => 'FusionInventory::Agent::Task::NetDiscovery::Kyocera',
         function => 'getDescriptionOther'
 
     },
     {
         match => 'SB-110',
-        module => 'FusionInventory::Agent::Task::NetDiscovery::Manufacturer::Kyocera',
+        module => 'FusionInventory::Agent::Task::NetDiscovery::Kyocera',
         function => 'getDescriptionOther'
 
     },
         {
         match => qr/RICOH NETWORK PRINTER/,
-        module => 'FusionInventory::Agent::Task::NetDiscovery::Manufacturer::Ricoh',
+        module => 'FusionInventory::Agent::Task::NetDiscovery::Ricoh',
         function => 'getDescription'
 
     },
     {
         # samsung
         match => qr/SAMSUNG NETWORK PRINTER,ROM/,
-        module => 'FusionInventory::Agent::Task::NetDiscovery::Manufacturer::Samsung',
+        module => 'FusionInventory::Agent::Task::NetDiscovery::Samsung',
         function => 'getDescription'
     },
     {
         # Wyse
         match => qr/Linux/,
-        module => 'FusionInventory::Agent::Task::NetDiscovery::Manufacturer::Wyse',
+        module => 'FusionInventory::Agent::Task::NetDiscovery::Wyse',
         function => 'getDescription'
     },
     {
         # Zebra
         match => qr/ZebraNet PrintServer/,
-        module => 'FusionInventory::Agent::Task::NetDiscovery::Manufacturer::Zebranet',
+        module => 'FusionInventory::Agent::Task::NetDiscovery::Zebranet',
         function => 'getDescription'
     },
 );

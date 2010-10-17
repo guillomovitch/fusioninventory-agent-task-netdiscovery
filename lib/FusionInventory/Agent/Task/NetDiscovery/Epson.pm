@@ -1,4 +1,4 @@
-package FusionInventory::Agent::Task::NetDiscovery::Manufacturer::Epson;
+package FusionInventory::Agent::Task::NetDiscovery::Epson;
 
 use strict;
 use warnings;

@@ -1,4 +1,4 @@
-package FusionInventory::Agent::Task::NetDiscovery::Manufacturer::Samsung;
+package FusionInventory::Agent::Task::NetDiscovery::Samsung;
 
 use strict;
 use warnings;

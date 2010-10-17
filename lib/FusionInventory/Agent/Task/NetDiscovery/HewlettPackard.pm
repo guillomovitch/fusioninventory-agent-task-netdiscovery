@@ -1,4 +1,4 @@
-package FusionInventory::Agent::Task::NetDiscovery::Manufacturer::HewlettPackard;
+package FusionInventory::Agent::Task::NetDiscovery::HewlettPackard;
 
 use strict;
 use warnings;

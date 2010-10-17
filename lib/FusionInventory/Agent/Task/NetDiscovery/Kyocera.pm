@@ -1,4 +1,4 @@
-package FusionInventory::Agent::Task::NetDiscovery::Manufacturer::Kyocera;
+package FusionInventory::Agent::Task::NetDiscovery::Kyocera;
 
 use strict;
 use warnings;
