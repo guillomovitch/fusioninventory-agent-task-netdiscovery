@@ -25,8 +25,6 @@ use FusionInventory::Agent::XML::Query::SimpleMessage;
 
 our $VERSION = '1.2';
 
-$ENV{XML_SIMPLE_PREFERRED_PARSER} = 'XML::SAX::PurePerl';
-
 sub run {
     my ($self) = @_;
 
