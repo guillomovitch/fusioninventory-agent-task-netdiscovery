@@ -3,68 +3,59 @@ package FusionInventory::Agent::Task::NetDiscovery::Manufacturer::Kyocera;
 use strict;
 use warnings;
 
-sub discovery {
-    my ($description, $session) = @_;
+sub getDescriptionHP {
+    my ($session) = @_;
 
-    if ($description =~ m/,HP,JETDIRECT,J/) {
-        my $description_new = $session->snmpGet({
-            oid => '.1.3.6.1.4.1.1229.2.2.2.1.15.1',
-            up  => 1,
-        });
-        if ($description_new) {
-            $description = $description_new;
+    my $result = $session->snmpGet({
+        oid => '.1.3.6.1.4.1.1229.2.2.2.1.15.1',
+        up  => 1,
+    });
+
+    return $result;
+}
+
+sub getDescriptionOther {
+    my ($session) = @_;
+
+    my $result = $session->snmpGet({
+        oid => '.1.3.6.1.4.1.1347.42.5.1.1.2.1',
+        up  => 1,
+    });
+
+    return $result if $result;
+
+    $result = $session->snmpGet({
+        oid => '.1.3.6.1.4.1.1347.43.5.1.1.1.1',
+        up  => 1,
+    });
+
+    return $result if $result;
+
+    $result = $session->snmpGet({
+        oid => '.1.3.6.1.4.1.1347.43.5.1.1.1.1',
+        up  => 1,
+    });
+
+    return $result if $result;
+
+    $result = $session->snmpGet({
+        oid => '.1.3.6.1.4.1.11.2.3.9.1.1.7.0',
+        up  => 1,
+    });
+
+    return unless $result;
+
+    foreach my $info (split(/;/, $result)) {
+        if ($info =~ /^MDL:/) {
+            $info =~ s/MDL://;
+            return $info;
+        } elsif ($info =~ /^MODEL:/) {
+            $info =~ s/MODEL://;
+            return $info;
         }
     }
-    
-    if (
-        $description eq "KYOCERA MITA Printing System" ||
-        $description eq "KYOCERA Printer I/F" ||
-        $description eq "SB-110"
-    ) {
-        my $description_new = $session->snmpGet({
-            oid => '.1.3.6.1.4.1.1347.42.5.1.1.2.1',
-            up  => 1,
-        });
-        if ($description_new) {
-            $description = $description_new;
-        } else {
-            my $description_new = $session->snmpGet({
-                oid => '.1.3.6.1.4.1.1347.43.5.1.1.1.1',
-                up  => 1,
-            });
-            if ($description_new) {
-                $description = $description_new;
-            } else {
-                my $description_new = $session->snmpGet({
-                    oid => '.1.3.6.1.4.1.1347.43.5.1.1.1.1',
-                    up  => 1,
-                });
-                if ($description_new) {
-                    $description = $description_new;
-                } else {
-                    my $description_new = $session->snmpGet({
-                        oid => '.1.3.6.1.4.1.11.2.3.9.1.1.7.0',
-                        up  => 1,
-                    });
-                    if ($description_new) {
-                        my @infos = split(/;/,$description_new);
-                        foreach (@infos) {
-                            if ($_ =~ /^MDL:/) {
-                                $_ =~ s/MDL://;
-                                $description = $_;
-                                last;
-                            } elsif ($_ =~ /^MODEL:/) {
-                                $_ =~ s/MODEL://;
-                                $description = $_;
-                                last;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    return $description;
+
+    return;
 }
 
 1;

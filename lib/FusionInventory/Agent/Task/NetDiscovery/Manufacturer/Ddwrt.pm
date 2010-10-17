@@ -3,19 +3,19 @@ package FusionInventory::Agent::Task::NetDiscovery::Manufacturer::Ddwrt;
 use strict;
 use warnings;
 
-sub discovery {
-    my ($description, $session) = @_;
+sub getDescription {
+    my ($session) = @_;
 
-    if ($description =~ m/Linux/) {
-        my $description_new = $session->snmpGet({
-            oid => '.1.3.6.1.2.1.1.5.0',
-            up  => 1,
-        });
-        if ($description_new eq "dd-wrt") {
-            $description = "dd-wrt";
-        }
+    my $result = $session->snmpGet({
+        oid => '.1.3.6.1.2.1.1.5.0',
+        up  => 1,
+    });
+
+    if ($result && $result eq 'dd-wrt') {
+        $result = 'dd-wrt';
     }
-    return $description;
+
+    return $result;
 }
 
 1;

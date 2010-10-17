@@ -3,30 +3,27 @@ package FusionInventory::Agent::Task::NetDiscovery::Manufacturer::Axis;
 use strict;
 use warnings;
 
-sub discovery {
-    my ($description, $session) = @_;
+sub getDescription {
+    my ($session) = @_;
 
-    if ($description =~ m/AXIS OfficeBasic Network Print Server/) {
-        my $description_new = $session->snmpGet({
-            oid => '.1.3.6.1.4.1.2699.1.2.1.2.1.1.3.1',
-            up  => 1,
-        });
-        if ($description_new) {
-            my @infos = split(/;/,$description_new);
-            foreach (@infos) {
-                if ($_ =~ /^MDL:/) {
-                    $_ =~ s/MDL://;
-                    $description = $_;
-                    last;
-                } elsif ($_ =~ /^MODEL:/) {
-                    $_ =~ s/MODEL://;
-                    $description = $_;
-                    last;
-                }
-            }
+    my $result = $session->snmpGet({
+        oid => '.1.3.6.1.4.1.2699.1.2.1.2.1.1.3.1',
+        up  => 1,
+    });
+
+    return unless $result;
+
+    foreach my $info (split(/;/, $result)) {
+        if ($info =~ /^MDL:/) {
+            $info =~ s/MDL://;
+            return $info;
+        } elsif ($info =~ /^MODEL:/) {
+            $info =~ s/MODEL://;
+            return $info;
         }
     }
-    return $description;
+
+    return;
 }
 
 1;

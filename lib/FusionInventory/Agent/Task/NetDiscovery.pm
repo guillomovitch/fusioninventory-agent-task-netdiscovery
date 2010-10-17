@@ -25,6 +25,102 @@ use FusionInventory::Agent::XML::Query::SimpleMessage;
 
 our $VERSION = '1.2';
 
+my @dispatch_table = (
+    {
+        # alcatel
+        match => qr/^\S+ Service Release/,
+        module => 'FusionInventory::Agent::Task::NetDiscovery::Manufacturer::Alcatel',
+        function => 'getDescription'
+    },
+    {
+        match => qr/AXIS OfficeBasic Network Print Server/,
+        module => 'FusionInventory::Agent::Task::NetDiscovery::Manufacturer::Axis',
+        function => 'getDescription'
+
+    },
+    {
+        # dd-wrt
+        match => qr/Linux/,
+        module => 'FusionInventory::Agent::Task::NetDiscovery::Manufacturer::Ddwrt',
+        function => 'getDescription'
+    },
+    {
+        # dell switch
+        match => 'Ethernet Switch',
+        module => 'FusionInventory::Agent::Task::NetDiscovery::Manufacturer::Dell',
+        function => 'getDescription'
+    },
+    {
+        # Epson
+        match => qr/EPSON Built-in/,
+        module => 'FusionInventory::Agent::Task::NetDiscovery::Manufacturer::Epson',
+        function => 'getDescriptionBuiltin'
+    },
+    {
+        # Epson
+        match => qr/EPSON Internal 10Base-T/,
+        module => 'FusionInventory::Agent::Task::NetDiscovery::Manufacturer::Epson',
+        function => 'getDescriptionInternal'
+    },
+    {
+        match => qr/HP ETHERNET MULTI-ENVIRONMENT/,
+        module => 'FusionInventory::Agent::Task::NetDiscovery::Manufacturer::HewlettPackard',
+        function => 'getDescription'
+    },
+    {
+        match => qr/A SNMP proxy agent, EEPROM/,
+        module => 'FusionInventory::Agent::Task::NetDiscovery::Manufacturer::HewlettPackard',
+        function => 'getDescription'
+    },
+    {
+        # kyocera
+        match => qr/,HP,JETDIRECT,J/,
+        module => 'FusionInventory::Agent::Task::NetDiscovery::Manufacturer::Kyocera',
+        function => 'getDescriptionHP'
+    },
+    {
+        match => 'KYOCERA MITA Printing System',
+        module => 'FusionInventory::Agent::Task::NetDiscovery::Manufacturer::Kyocera',
+        function => 'getDescriptionOther'
+    },
+    {
+        match => 'KYOCERA Printer I/F',
+        module => 'FusionInventory::Agent::Task::NetDiscovery::Manufacturer::Kyocera',
+        function => 'getDescriptionOther'
+
+    },
+    {
+        match => 'SB-110',
+        module => 'FusionInventory::Agent::Task::NetDiscovery::Manufacturer::Kyocera',
+        function => 'getDescriptionOther'
+
+    },
+        {
+        match => qr/RICOH NETWORK PRINTER/,
+        module => 'FusionInventory::Agent::Task::NetDiscovery::Manufacturer::Ricoh',
+        function => 'getDescription'
+
+    },
+    {
+        # samsung
+        match => qr/SAMSUNG NETWORK PRINTER,ROM/,
+        module => 'FusionInventory::Agent::Task::NetDiscovery::Manufacturer::Samsung',
+        function => 'getDescription'
+    },
+    {
+        # Wyse
+        match => qr/Linux/,
+        module => 'FusionInventory::Agent::Task::NetDiscovery::Manufacturer::Wyse',
+        function => 'getDescription'
+    },
+    {
+        # Zebra
+        match => qr/ZebraNet PrintServer/,
+        module => 'FusionInventory::Agent::Task::NetDiscovery::Manufacturer::Zebranet',
+        function => 'getDescription'
+    },
+);
+
 sub run {
     my ($self) = @_;
 
@@ -42,8 +138,6 @@ sub run {
     $self->{logger}->debug("FusionInventory NetDiscovery module $VERSION");
 
     $self->{countxml} = 0;
-
-    $self->initModList();
 
     $self->startThreads();
 
@@ -609,7 +703,7 @@ sub discoveryIpThreaded {
         _discoverBySNMP(
             $params->{ip}, $device,
             $params->{authlist}, $params->{dico},
-            $self->{logger}, $self->{modules}
+            $self->{logger}
         );
     }
 
@@ -705,7 +799,7 @@ sub _discoverByNetBios {
 }
 
 sub _discoverBySNMP {
-    my ($ip, $device, $authlist, $dico, $logger, $modules) = @_;
+    my ($ip, $device, $authlist, $dico, $logger) = @_;
 
     foreach my $key (keys %{$authlist}) {
         my $auth = $authlist->{$key};
@@ -741,10 +835,25 @@ sub _discoverBySNMP {
             return;
         }
 
+        foreach my $entry (@dispatch_table) {
+            if (ref $entry->{match} eq 'Regexp') {
+                next unless $description =~ $entry->{match};
+            } else {
+                next unless $description eq $entry->{match};
+            }
 
-        foreach my $module ( keys %{$modules} ) {
+            $entry->{module}->require();
+            if ($EVAL_ERROR) {
+                $logger->debug ("Failed to load $entry->{module}: $EVAL_ERROR");
+                last;
+            }
+
             no strict 'refs'; ## no critic
-            $description = &{$module . '::discovery'}($session, $description);
+            $description = &{$entry->{module} . '::' . $entry->{function}}(
+                $session
+            );
+
+            last;
         }
 
         $device->{DESCRIPTION} = $description;
@@ -876,57 +985,6 @@ sub verifySerial {
     }
 
     return ($serial, $type, $model, $mac);
-}
-
-sub initModList {
-    my $self = shift;
-
-    my $logger = $self->{logger};
-    my $config = $self->{config};
-
-    my @dirToScan;
-    my @installed_mods;
-    my @installed_files;
-
-    if ($config->{devlib}) {
-        # devlib enable, I only search for backend module in ./lib
-        push (@dirToScan, './lib');
-    } else {
-        foreach (@INC) {
-            next if ! -d || (-l && -d readlink) || /^(\.|lib)$/;
-            next if ! -d $_.'/FusionInventory/Agent/Task/NetDiscovery/Manufacturer';
-            push @dirToScan, $_;
-        }
-    }
-    if (@dirToScan) {
-        # here I need to use $d to avoid a bug with AIX 5.2's perl 5.8.0. It
-        # changes the @INC content if i use $_ directly
-        # thanks to @rgs on irc.perl.org
-        File::Find::find(
-            {
-                wanted => sub {
-                    push @installed_files, $File::Find::name if $File::Find::name =~
-                    /FusionInventory\/Agent\/Task\/NetDiscovery\/Manufacturer\/.*\.pm$/;
-                },
-                follow => 1,
-                follow_skip => 2
-            }
-            , @dirToScan
-        );
-    }
-    foreach my $file (@installed_files) {
-        my $t = $file;
-        next unless $t =~ s!.*?(FusionInventory/Agent/Task/NetDiscovery/Manufacturer/)(.*?)\.pm$!$1$2!;
-        my $m = join ('::', split /\//, $t);
-        $m->require();
-        if ($EVAL_ERROR) {
-            $logger->debug ("Failed to load $m: $EVAL_ERROR");
-            next;
-        } else {
-            $logger->debug ($m." loaded");
-            $self->{modules}->{$m} = 1;
-        }
-    }
 }
 
 1;

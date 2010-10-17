@@ -3,26 +3,21 @@ package FusionInventory::Agent::Task::NetDiscovery::Manufacturer::Wyse;
 use strict;
 use warnings;
 
-sub discovery {
-    my ($description, $session) = @_;
+sub getDescription {
+    my ($session) = @_;
 
-    if ($description =~ m/Linux/) {
+    my $result = $session->snmpGet({
+        oid => '.1.3.6.1.4.1.714.1.2.5.6.1.2.1.6.1',
+        up  => 1,
+    });
 
-        my $description_new = $session->snmpGet({
-            oid => '.1.3.6.1.4.1.714.1.2.5.6.1.2.1.6.1',
-            up  => 1,
-        });
-        if ($description_new) {
-            $description_new =~ s/^"//;
-            $description_new =~ s/"$//;
-            $description = "Wyse ".$description_new;
-        }
+    if ($result) {
+        $result =~ s/^"//;
+        $result =~ s/"$//;
+        $result = "Wyse $result";
     }
 
-    # OR ($description{'.1.3.6.1.2.1.1.1.0'} =~ m/Windows/))
-    # In other oid for Windows
-
-    return $description;
+    return $result;
 }
 
 1;
