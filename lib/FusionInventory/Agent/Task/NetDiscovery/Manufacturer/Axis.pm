@@ -11,7 +11,7 @@ sub discovery {
             oid => '.1.3.6.1.4.1.2699.1.2.1.2.1.1.3.1',
             up  => 1,
         });
-        if ($description_new ne "null") {
+        if ($description_new) {
             my @infos = split(/;/,$description_new);
             foreach (@infos) {
                 if ($_ =~ /^MDL:/) {
