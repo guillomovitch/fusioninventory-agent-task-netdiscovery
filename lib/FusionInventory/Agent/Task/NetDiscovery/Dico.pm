@@ -1,6 +1,7 @@
 package FusionInventory::Agent::Task::NetDiscovery::Dico;
 
 use strict;
+use warnings;
 
 use English qw/-no_match_vars/;
 use XML::TreePP;
@@ -10,7 +11,7 @@ sub new {
     my $dico = <DATA>;
 
     my $tpp = XML::TreePP->new();
-    return $tpp->parse($dico);
+    return scalar $tpp->parse($dico);
 }
 
 1;
