@@ -780,10 +780,10 @@ sub _discoverByNetBios {
     if ($ns) {
         foreach my $rr ($ns->names()) {
             if ($rr->suffix() == 0 && $rr->G() eq "GROUP") {
-                $device->{WORKGROUP} = specialChar($rr->name);
+                $device->{WORKGROUP} = specialChar($rr->name());
             }
             if ($rr->suffix() == 3 && $rr->G() eq "UNIQUE") {
-                $device->{USERSESSION} = specialChar($rr->name);
+                $device->{USERSESSION} = specialChar($rr->name());
             }
             if ($rr->suffix() == 0 && $rr->G() eq "UNIQUE") {
                 my $machine = $rr->name();
