@@ -748,21 +748,25 @@ sub _discoverByNmapScanner {
     my ($ip, $device) = @_;
 
     my $scan = Nmap::Scanner->new();
-    my $results_nmap = $scan->scan('-sP --system-dns --max-retries 1 --max-rtt-timeout 1000' . $ip);
+    my $result = $scan->scan(
+        "-sP --system-dns --max-retries 1 --max-rtt-timeout 1000 $ip"
+    );
 
-    foreach my $key (keys (%{$$results_nmap{'ALLHOSTS'}})) {
-        for (my $n=0; $n<@{$$results_nmap{'ALLHOSTS'}{$key}{'addresses'}}; $n++) {
-            if ($$results_nmap{'ALLHOSTS'}{$key}{'addresses'}[$n]{'addrtype'} eq "mac") {
-                $device->{MAC} = specialChar($$results_nmap{'ALLHOSTS'}{$key}{'addresses'}[$n]{'addr'});
-                if (defined($$results_nmap{'ALLHOSTS'}{$key}{'addresses'}[$n]{'vendor'})) {
-                    $device->{NETPORTVENDOR} = specialChar($$results_nmap{'ALLHOSTS'}{$key}{'addresses'}[$n]{'vendor'});
-                }
-            }
+    my $host = $result->get_host_list()->get_next();
+    return unless $host;
+
+    foreach my $address ($host->addresses()) {
+        if ($address->addrtype() eq 'mac') {
+            $device->{MAC} = specialChar($address->addr());
         }
-        if (exists($$results_nmap{'ALLHOSTS'}{$key}{'hostnames'}[0])) {
-            for (my $n=0; $n<@{$$results_nmap{'ALLHOSTS'}{$key}{'hostnames'}}; $n++) {
-                $device->{DNSHOSTNAME} = specialChar($$results_nmap{'ALLHOSTS'}{$key}{'hostnames'}[$n]{'name'});
-            }
+        if ($address->vendor()) {
+            $device->{NETPORTVENDOR} = specialChar($address->vendor());
+        }
+    }
+
+    foreach my $hostname ($host->hostnames()) {
+        if ($hostname->name()) {
+            $device->{DNSHOSTNAME} = specialChar($hostname->name());
         }
     }
 }
