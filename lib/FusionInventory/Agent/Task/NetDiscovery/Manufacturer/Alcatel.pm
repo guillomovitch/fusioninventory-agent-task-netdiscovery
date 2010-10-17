@@ -8,7 +8,7 @@ sub discovery {
 
     # example : 5.1.6.485.R02 Service Release, September 26, 2008.
 
-    if ($description =~ m/^([1-9]{1}).([0-9]{1}).([0-9]{1})(.*) Service Release,(.*)([0-9]{1}).$/ ) {
+    if ($description =~ m/Service Release/ ) {
         my $description_new = $session->snmpGet({
             oid => '.1.3.6.1.2.1.47.1.1.1.1.13.1',
             up  => 1,
