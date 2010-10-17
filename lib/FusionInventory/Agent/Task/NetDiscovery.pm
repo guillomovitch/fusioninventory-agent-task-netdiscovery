@@ -741,8 +741,10 @@ sub _discoverBySNMP {
             return;
         }
 
-        foreach my $m ( keys %{$modules} ) {
-            $description = $m->discovery($description, $session,$description);
+
+        foreach my $module ( keys %{$modules} ) {
+            no strict 'refs'; ## no critic
+            $description = &{$module . '::discovery'}($session, $description);
         }
 
         $device->{DESCRIPTION} = $description;

@@ -4,9 +4,7 @@ use strict;
 use warnings;
 
 sub discovery {
-    my $empty       = shift;
-    my $description = shift;
-    my $session     = shift;
+    my ($description, $session) = @_;
 
     if ($description =~ m/ZebraNet PrintServer/) {
         my $description_new = $session->snmpGet({
