@@ -19,6 +19,7 @@ use UNIVERSAL::require;
 
 use FusionInventory::Agent::Regexp;
 use FusionInventory::Agent::Storage;
+use FusionInventory::Agent::Tools;
 use FusionInventory::Agent::Task::NetDiscovery::Dico;
 use FusionInventory::Agent::XML::Query::SimpleMessage;
 
@@ -734,11 +735,11 @@ sub _discoverByNmapParser {
             $ip
         );
         my $host = $scan->{HOSTS}->{$ip};
-        $device->{DNSHOSTNAME} = specialChar($host->{hostnames}->[0])
+        $device->{DNSHOSTNAME} = getSanitizedString($host->{hostnames}->[0])
             if $host->{hostnames}->[0];
-        $device->{MAC} = specialChar($host->{addrs}->{mac}->{addr})
+        $device->{MAC} = getSanitizedString($host->{addrs}->{mac}->{addr})
             if $host->{addrs}->{mac}->{addr};
-        $device->{NETPORTVENDOR} = specialChar(
+        $device->{NETPORTVENDOR} = getSanitizedString(
             $host->{addrs}->{mac}->{vendor}
         ) if $host->{addrs}->{mac}->{vendor};
     };
@@ -757,16 +758,16 @@ sub _discoverByNmapScanner {
 
     foreach my $address ($host->addresses()) {
         if ($address->addrtype() eq 'mac') {
-            $device->{MAC} = specialChar($address->addr());
+            $device->{MAC} = getSanitizedString($address->addr());
         }
         if ($address->vendor()) {
-            $device->{NETPORTVENDOR} = specialChar($address->vendor());
+            $device->{NETPORTVENDOR} = getSanitizedString($address->vendor());
         }
     }
 
     foreach my $hostname ($host->hostnames()) {
         if ($hostname->name()) {
-            $device->{DNSHOSTNAME} = specialChar($hostname->name());
+            $device->{DNSHOSTNAME} = getSanitizedString($hostname->name());
         }
     }
 }
@@ -780,14 +781,14 @@ sub _discoverByNetBios {
     if ($ns) {
         foreach my $rr ($ns->names()) {
             if ($rr->suffix() == 0 && $rr->G() eq "GROUP") {
-                $device->{WORKGROUP} = specialChar($rr->name());
+                $device->{WORKGROUP} = getSanitizedString($rr->name());
             }
             if ($rr->suffix() == 3 && $rr->G() eq "UNIQUE") {
-                $device->{USERSESSION} = specialChar($rr->name());
+                $device->{USERSESSION} = getSanitizedString($rr->name());
             }
             if ($rr->suffix() == 0 && $rr->G() eq "UNIQUE") {
                 my $machine = $rr->name();
-                $device->{NETBIOSNAME} = specialChar($machine)
+                $device->{NETBIOSNAME} = getSanitizedString($machine)
                     unless $machine =~ /^IS~/;
             }
         }
@@ -896,22 +897,6 @@ sub _discoverBySNMP {
         $session->close();
     }
 }
-
-
-sub specialChar {
-    my $variable = shift;
-    if (defined($variable)) {
-        if ($variable =~ /0x$/) {
-            return "";
-        }
-        $variable =~ s/([\x80-\xFF])//;
-        return $variable;
-    } else {
-        return "";
-    }
-}
-
-
 
 sub verifySerial {
     my ($description, $session, $dico) = @_;
