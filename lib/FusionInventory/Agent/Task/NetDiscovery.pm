@@ -793,7 +793,7 @@ sub _discoverByNetBios {
         }
         if (
             ! exists $device->{MAC} ||
-            $device->{MAC} !~ /^([0-9a-f]{2}([:]|$)){6}$/i
+            $device->{MAC} !~ /^$mac_address_pattern$/
         ) {
             my $NetbiosMac = $ns->mac_address();
             $NetbiosMac =~ tr/-/:/;
@@ -886,7 +886,7 @@ sub _discoverBySNMP {
         $device->{TYPE} = $type;
         $device->{IP} = $ip;
         if (exists($device->{MAC})) {
-            if ($device->{MAC} !~ /^([0-9a-f]{2}([:]|$)){6}$/i) {
+            if ($device->{MAC} !~ /^$mac_address_pattern$/) {
                 $device->{MAC} = $mac;
             }
         } else {
@@ -957,21 +957,21 @@ sub verifySerial {
                 next unless $macadress;
                 next if $macadress eq '0:0:0:0:0:0';
                 next if $macadress eq '00:00:00:00:00:00';
-                if ($mac !~ /^([0-9a-f]{2}([:]|$)){6}$/i) {
+                if ($mac !~ /^$mac_address_pattern$/) {
                     $mac = $macadress;
                 }
             }
         }
 
         # Mac of switchs
-        if ($mac !~ /^([0-9a-f]{2}([:]|$)){6}$/i) {
+        if ($mac !~ /^$mac_address_pattern$/) {
             $mac = $session->snmpGet({
                 oid => ".1.3.6.1.2.1.17.1.1.0",
                 up  => 0,
             });
         }
 
-        if ($mac !~ /^([0-9a-f]{2}([:]|$)){6}$/i) {
+        if ($mac !~ /^$mac_address_pattern$/) {
             my $macadresses = $session->snmpWalk({
                 oid_start => ".1.3.6.1.2.1.2.2.1.6"
             });
@@ -979,7 +979,7 @@ sub verifySerial {
                 next unless $macadress;
                 next if $macadress eq '0:0:0:0:0:0';
                 next if $macadress eq '00:00:00:00:00:00';
-                if ($mac !~ /^([0-9a-f]{2}([:]|$)){6}$/i) {
+                if ($mac !~ /^$mac_address_pattern$/) {
                     $mac = $macadress;
                 }
             }
