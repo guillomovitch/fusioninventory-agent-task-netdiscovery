@@ -786,8 +786,9 @@ sub _discoverByNetBios {
                 $device->{USERSESSION} = specialChar($rr->name);
             }
             if ($rr->suffix() == 0 && $rr->G() eq "UNIQUE") {
-                my $machine = $rr->name() unless $rr->name() =~ /^IS~/;
-                $device->{NETBIOSNAME} = specialChar($machine);
+                my $machine = $rr->name();
+                $device->{NETBIOSNAME} = specialChar($machine)
+                    unless $machine =~ /^IS~/;
             }
         }
         if (
