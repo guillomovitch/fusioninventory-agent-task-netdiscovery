@@ -6,8 +6,8 @@ use English qw/-no_match_vars/;
 use XML::TreePP;
 
 sub new {
-   undef $INPUT_RECORD_SEPARATOR; # enable slurp mode
-   my $dico = <DATA>;
+    undef $INPUT_RECORD_SEPARATOR; # enable slurp mode
+    my $dico = <DATA>;
 
     my $tpp = XML::TreePP->new();
     return $tpp->parse($dico);
