@@ -20,7 +20,6 @@ use UNIVERSAL::require;
 use FusionInventory::Agent::Regexp;
 use FusionInventory::Agent::Storage;
 use FusionInventory::Agent::Task::NetDiscovery::Dico;
-use FusionInventory::Agent::Task::NetDiscovery::HewlettPackard;
 use FusionInventory::Agent::XML::Query::SimpleMessage;
 
 our $VERSION = '1.2';
