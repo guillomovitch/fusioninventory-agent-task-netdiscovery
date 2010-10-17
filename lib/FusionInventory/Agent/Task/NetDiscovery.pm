@@ -43,12 +43,6 @@ sub run {
 
     $self->{logger}->debug("FusionInventory NetDiscovery module $VERSION");
 
-    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
-    $hour  = sprintf("%02d", $hour);
-    $min  = sprintf("%02d", $min);
-    $yday = sprintf("%04d", $yday);
-    $self->{PID} = $yday.$hour.$min;
-
     $self->{countxml} = 0;
 
     $self->initModList();
