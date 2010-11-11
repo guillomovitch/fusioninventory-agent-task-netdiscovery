@@ -239,7 +239,7 @@ sub startThreads {
     }
 
     # Auth SNMP
-    my $authlist = FusionInventory::Agent::SNMP->getAuthList($options);
+    my $authlist = getAuthList($options);
 
     # Dispatch IPs to different core
     my $iplist = {};
@@ -771,8 +771,7 @@ sub _discoverByNetBios {
 sub _discoverBySNMP {
     my ($ip, $device, $authlist, $dico, $logger) = @_;
 
-    foreach my $key (keys %{$authlist}) {
-        my $auth = $authlist->{$key};
+    foreach my $auth (@{$authlist}) {
         my $session;
         eval {
             $session = FusionInventory::Agent::SNMP->new({
@@ -848,7 +847,7 @@ sub _discoverBySNMP {
         }
         $device->{SERIAL} = $serial;
         $device->{MODELSNMP} = $model;
-        $device->{AUTHSNMP} = $key;
+        $device->{AUTHSNMP} = $auth->{ID};
         $device->{TYPE} = $type;
         $device->{IP} = $ip;
         if (exists($device->{MAC})) {
@@ -939,6 +938,18 @@ sub verifySerial {
     }
 
     return ($serial, $type, $model, $mac);
+}
+
+sub getAuthsList {
+    my ($options) = @_;
+
+    my $list;
+
+    foreach my $auth (@{$options->{AUTHENTICATION}}) {
+        push @$list, $auth;
+    }
+
+    return $list;
 }
 
 1;
